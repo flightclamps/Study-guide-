@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>E-Commerce 2023 Holiday Quiz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -42,7 +42,7 @@
             animation: twinkle 1.5s infinite;
         }
 
-        /* Utility for fade in */
+        /* Fade-in */
         .fade-in {
             animation: fadeIn 0.5s ease-in-out;
         }
@@ -52,9 +52,36 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Better tap behavior on mobile buttons */
         button {
             touch-action: manipulation;
+        }
+
+        /* RGBIC-style glowing border around quiz card */
+        .rgbic-border {
+            position: relative;
+        }
+        .rgbic-border::before {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: 1.25rem;
+            background: linear-gradient(
+                120deg,
+                #f97373,
+                #22c55e,
+                #facc15,
+                #22d3ee,
+                #a855f7,
+                #f97373
+            );
+            background-size: 300% 300%;
+            animation: rgbicGlow 6s linear infinite;
+            z-index: -1;
+        }
+        @keyframes rgbicGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
     </style>
 </head>
@@ -71,14 +98,14 @@
     <div class="z-10 w-full max-w-2xl px-3 sm:px-4 pb-12 mt-2 sm:mt-4">
         <!-- Header -->
         <div class="text-center mb-6 sm:mb-8">
-            <h1 class="text-2xl sm:text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-green-400 drop-shadow-sm mb-1 sm:mb-2">
+            <h1 class="text-2xl sm:text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-emerald-300 to-green-400 drop-shadow-sm mb-1 sm:mb-2">
                 E-Commerce 2023
             </h1>
             <div class="flex items-center justify-center space-x-1 sm:space-x-2 text-slate-300 text-xs sm:text-sm">
                 <!-- Gift Icon Left -->
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 12a1 1 0 00-1-1v-2.5a.5.5 0 00-.5-.5h-2.293a1 1 0 00-.707.293l-1.647 1.647a.5.5 0 00-.146.353V12a1 1 0 00-1 1v4.5a.5.5 0 00.5.5h2.293a1 1 0 00.707-.293l1.647-1.647a.5.5 0 00.146-.353V16.5a1 1 0 001-1V12z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 12a1 1 0 011-1v-2.5a.5.5 0 01.5-.5h2.293a1 1 0 01.707.293l1.647 1.647a.5.5 0 01.146.353V12a1 1 0 01-1 1v4.5a.5.5 0 01-.5.5H6.293a1 1 0 01-.707-.293l-1.647-1.647a.5.5 0 01-.146-.353V16.5a1 1 0 01-1-1V12z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 12a1 1 0 011-1v-2.5a.5.5 0 01.5-.5h2.293a1 1 0 01.707.293l1.647 1.647a.5.5 0 01.146.353V12a1 1 0 01-1 1v4.5a.5.5 0 01-.5.5H6.293a1 1 0 01-.707-.293l-1.647-1-647a.5.5 0 01-.146-.353V16.5a1 1 0 01-1-1V12z" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h18" />
                 </svg>
@@ -94,21 +121,27 @@
         </div>
 
         <!-- Quiz Container -->
-        <div id="quiz-card" class="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl border border-white/10 min-h-[380px] sm:min-h-[400px]">
+        <div id="quiz-card" class="rgbic-border rounded-2xl p-[1px]">
+          <div class="bg-slate-900/90 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl border border-white/10 min-h-[380px] sm:min-h-[400px]">
             
             <!-- Progress Section -->
-            <div id="progress-section" class="mb-4 sm:mb-6">
+            <div id="progress-section" class="mb-3 sm:mb-4">
                 <div class="flex justify-between text-[11px] sm:text-sm text-slate-400 mb-2">
                     <span id="question-tracker">Question 1 of 30</span>
                     <span id="score-tracker">Score: 0</span>
                 </div>
                 <div class="w-full bg-slate-700 rounded-full h-2">
-                    <div id="progress-bar" class="bg-gradient-to-r from-red-500 to-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="progress-bar" class="bg-gradient-to-r from-red-500 via-emerald-400 to-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
             </div>
 
+            <!-- Question Navigator -->
+            <div id="question-nav" class="mb-4 grid grid-cols-10 gap-1 sm:gap-2 text-[11px] sm:text-xs">
+                <!-- nav buttons injected here -->
+            </div>
+
             <!-- Question Text -->
-            <div id="question-container" class="mb-5 sm:mb-8">
+            <div id="question-container" class="mb-5 sm:mb-6">
                 <h3 id="question-text" class="text-lg sm:text-xl md:text-2xl font-semibold leading-relaxed fade-in">
                     Loading Question...
                 </h3>
@@ -121,16 +154,26 @@
 
             <!-- Explanation & Next Button Area -->
             <div id="feedback-area" class="mt-5 sm:mt-6 hidden fade-in">
-                <div id="explanation-box" class="p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 border">
+                <div id="explanation-box" class="p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border">
                     <p id="feedback-title" class="font-semibold mb-1 text-xs sm:text-sm uppercase tracking-wider opacity-70">Correct!</p>
                     <p id="explanation-text" class="text-slate-200 text-sm sm:text-base">Explanation text goes here.</p>
                 </div>
-                <button id="next-btn" class="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-bold py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.99]">
-                    <span id="next-btn-text">Next Question</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
+
+                <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                    <button id="retry-btn" class="w-full sm:w-1/2 flex items-center justify-center space-x-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 sm:py-3 px-4 rounded-xl transition-all transform active:scale-[0.98] hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Retry Question</span>
+                    </button>
+
+                    <button id="next-btn" class="w-full sm:w-1/2 flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-400 hover:from-red-500 hover:via-rose-400 hover:to-red-300 text-white font-bold py-2.5 sm:py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                        <span id="next-btn-text">Next Question</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Results Section (Hidden initially) -->
@@ -147,7 +190,7 @@
                 
                 <div id="final-message" class="mb-6 sm:mb-8 text-base sm:text-lg"></div>
 
-                <button onclick="restartQuiz()" class="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold py-3 sm:py-3.5 px-6 sm:px-8 rounded-full transition-all transform hover:scale-105 active:scale-[0.99] mx-auto">
+                <button onclick="restartQuiz()" class="flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 via-teal-400 to-green-500 hover:from-emerald-500 hover:via-teal-300 hover:to-green-400 text-white font-bold py-3 sm:py-3.5 px-6 sm:px-8 rounded-full transition-all transform hover:scale-105 active:scale-[0.99] mx-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
@@ -155,6 +198,7 @@
                 </button>
             </div>
 
+          </div>
         </div>
 
         <div class="text-center mt-6 sm:mt-8 text-slate-500 text-xs sm:text-sm">
@@ -469,8 +513,12 @@
 
         // --- STATE ---
         let currentQuestionIndex = 0;
+        let questionStates = questions.map(() => ({
+            answered: false,
+            isCorrect: false,
+            selectedIndex: null
+        }));
         let score = 0;
-        let isAnswered = false;
 
         // --- ELEMENTS ---
         const snowContainer = document.getElementById('snow-container');
@@ -486,12 +534,21 @@
         const explanationBox = document.getElementById('explanation-box');
         const nextBtn = document.getElementById('next-btn');
         const nextBtnText = document.getElementById('next-btn-text');
+        const retryBtn = document.getElementById('retry-btn');
         const progressSection = document.getElementById('progress-section');
         const resultsSection = document.getElementById('results-section');
         const finalScore = document.getElementById('final-score');
         const totalQuestionsSpan = document.getElementById('total-questions');
         const finalMessage = document.getElementById('final-message');
-        const quizCard = document.getElementById('quiz-card');
+        const questionNav = document.getElementById('question-nav');
+        const questionContainer = document.getElementById('question-container');
+
+        const baseOptionClass =
+          "w-full text-left p-3 sm:p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-700 hover:border-slate-500 transition-all duration-200 flex items-center justify-between group text-sm sm:text-base";
+        const correctOptionClass =
+          "w-full text-left p-3 sm:p-4 rounded-xl border border-green-500 bg-green-500/20 text-green-200 transition-all flex items-center justify-between text-sm sm:text-base";
+        const incorrectOptionClass =
+          "w-full text-left p-3 sm:p-4 rounded-xl border border-red-500 bg-red-500/20 text-red-200 transition-all flex items-center justify-between text-sm sm:text-base";
 
         // --- INIT ---
         function init() {
@@ -502,7 +559,7 @@
 
         // --- SNOWFLAKES ---
         function createSnowflakes() {
-            const count = window.innerWidth < 640 ? 30 : 50; // fewer on mobile
+            const count = window.innerWidth < 640 ? 30 : 50;
             for (let i = 0; i < count; i++) {
                 const flake = document.createElement('div');
                 flake.classList.add('snowflake');
@@ -522,53 +579,117 @@
 
         // --- LIGHTS ---
         function createLights() {
-            const colors = ['bg-red-500 shadow-red-500/50', 'bg-green-500 shadow-green-500/50', 'bg-yellow-400 shadow-yellow-400/50'];
-            const lightCount = window.innerWidth < 640 ? 8 : 12;
+            const colors = [
+                'bg-red-500 shadow-red-500/50',
+                'bg-emerald-400 shadow-emerald-400/50',
+                'bg-amber-300 shadow-amber-300/50',
+                'bg-cyan-400 shadow-cyan-400/50',
+                'bg-fuchsia-400 shadow-fuchsia-400/50'
+            ];
+            const lightCount = window.innerWidth < 640 ? 10 : 16;
             for (let i = 0; i < lightCount; i++) {
                 const light = document.createElement('div');
-                const colorClass = colors[i % 3];
+                const colorClass = colors[i % colors.length];
                 light.className = `light w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 rounded-full shadow-lg ${colorClass}`;
                 light.style.animationDelay = `${i * 0.2}s`;
                 lightsContainer.appendChild(light);
             }
         }
 
-        // --- QUIZ LOGIC ---
+        function updateScore() {
+            score = questionStates.reduce(
+                (sum, q) => sum + (q.answered && q.isCorrect ? 1 : 0),
+                0
+            );
+            scoreTracker.innerText = `Score: ${score}`;
+        }
+
+        function updateProgressBar() {
+            const answeredCount = questionStates.filter(q => q.answered).length;
+            const progress = (answeredCount / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function renderQuestionNav() {
+            questionNav.innerHTML = "";
+            questions.forEach((_, idx) => {
+                const state = questionStates[idx];
+                const btn = document.createElement('button');
+
+                let base =
+                    "rounded-full py-1 sm:py-1.5 px-2 sm:px-3 border text-[11px] sm:text-xs transition-all";
+                
+                if (idx === currentQuestionIndex) {
+                    btn.className =
+                        base +
+                        " border-transparent text-slate-900 font-semibold bg-gradient-to-br from-red-400 via-emerald-300 to-amber-300 shadow-md";
+                } else if (state.answered && state.isCorrect) {
+                    btn.className =
+                        base +
+                        " border-emerald-400 text-emerald-300 bg-emerald-900/30";
+                } else if (state.answered && !state.isCorrect) {
+                    btn.className =
+                        base +
+                        " border-red-400 text-red-300 bg-red-900/30";
+                } else {
+                    btn.className =
+                        base +
+                        " border-slate-600 text-slate-300 bg-slate-800/60";
+                }
+
+                btn.innerText = idx + 1;
+                btn.onclick = () => {
+                    currentQuestionIndex = idx;
+                    renderQuestion();
+                };
+                questionNav.appendChild(btn);
+            });
+        }
+
         function renderQuestion() {
             const q = questions[currentQuestionIndex];
-            
-            // Text
-            questionText.innerText = q.question;
-            questionTracker.innerText = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
-            scoreTracker.innerText = `Score: ${score}`;
-            
-            // Progress Bar
-            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-            progressBar.style.width = `${progress}%`;
+            const state = questionStates[currentQuestionIndex];
 
-            // Clear Options
+            questionText.innerText = q.question;
+            questionTracker.innerText =
+                `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+            updateScore();
+            updateProgressBar();
+            renderQuestionNav();
+
             optionsContainer.innerHTML = '';
-            
-            // Generate Options
-            q.options.forEach((opt) => {
+            optionsContainer.classList.remove('pointer-events-none');
+
+            q.options.forEach((opt, idx) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-3 sm:p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-700 hover:border-slate-500 transition-all duration-200 flex items-center justify-between group text-sm sm:text-base";
-                
+                btn.className = baseOptionClass;
                 const span = document.createElement('span');
                 span.innerText = opt.text;
                 span.className = "pr-2";
                 btn.appendChild(span);
 
-                btn.onclick = () => handleAnswer(opt, btn);
+                btn.onclick = () => handleAnswer(opt, btn, idx);
                 optionsContainer.appendChild(btn);
             });
 
-            // Reset UI
             feedbackArea.classList.add('hidden');
-            optionsContainer.classList.remove('pointer-events-none');
-            isAnswered = false;
-            
-            // Update button text logic
+            retryBtn.classList.add('hidden');
+
+            if (state.answered && state.selectedIndex !== null) {
+                const allButtons = optionsContainer.querySelectorAll('button');
+                const selectedBtn = allButtons[state.selectedIndex];
+                if (selectedBtn) {
+                    selectedBtn.className = correctOptionClass;
+                }
+                optionsContainer.classList.add('pointer-events-none');
+
+                explanationBox.className =
+                    "p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border bg-green-900/30 border-green-500/30";
+                feedbackTitle.innerText = "CORRECT!";
+                explanationText.innerText = q.explanation;
+                feedbackArea.classList.remove('hidden');
+            }
+
             if (currentQuestionIndex === questions.length - 1) {
                 nextBtnText.innerText = "See Results";
             } else {
@@ -576,52 +697,78 @@
             }
         }
 
-        function handleAnswer(selectedOption, btnElement) {
-            if (isAnswered) return;
-            isAnswered = true;
+        function handleAnswer(option, btnElement, optionIndex) {
+            const state = questionStates[currentQuestionIndex];
+            const q = questions[currentQuestionIndex];
 
-            const isCorrect = selectedOption.isCorrect;
-            
-            // Visuals
-            if (isCorrect) {
-                score++;
-                btnElement.className = "w-full text-left p-3 sm:p-4 rounded-xl border border-green-500 bg-green-500/20 text-green-200 transition-all flex items-center justify-between text-sm sm:text-base";
-                // Add Check Icon
-                btnElement.innerHTML += `<svg class="w-5 h-5 flex-shrink-0 text-green-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
-                
-                // Feedback Box Style
-                explanationBox.className = "p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 border bg-green-900/30 border-green-500/30";
-                feedbackTitle.innerText = "CORRECT!";
-            } else {
-                btnElement.className = "w-full text-left p-3 sm:p-4 rounded-xl border border-red-500 bg-red-500/20 text-red-200 transition-all flex items-center justify-between text-sm sm:text-base";
-                 // Add X Icon
-                 btnElement.innerHTML += `<svg class="w-5 h-5 flex-shrink-0 text-red-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
-                
-                // Feedback Box Style
-                explanationBox.className = "p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 border bg-red-900/30 border-red-500/30";
-                feedbackTitle.innerText = "INCORRECT";
-
-                // Highlight correct answer
-                const allButtons = optionsContainer.querySelectorAll('button');
-                questions[currentQuestionIndex].options.forEach((opt, idx) => {
-                    if(opt.isCorrect) {
-                        allButtons[idx].classList.add('border-green-500', 'bg-green-500/10', 'text-green-200');
-                    }
-                });
+            if (state.answered && state.isCorrect) {
+                return;
             }
 
-            // Show Explanation
-            explanationText.innerText = questions[currentQuestionIndex].explanation;
-            feedbackArea.classList.remove('hidden');
-            
-            // Disable clicks
-            optionsContainer.classList.add('pointer-events-none');
-            
-            // Update score display immediately
-            scoreTracker.innerText = `Score: ${score}`;
+            const allButtons = optionsContainer.querySelectorAll('button');
+            allButtons.forEach(b => (b.className = baseOptionClass));
+
+            const isCorrect = option.isCorrect;
+
+            if (isCorrect) {
+                state.answered = true;
+                state.isCorrect = true;
+                state.selectedIndex = optionIndex;
+
+                btnElement.className = correctOptionClass;
+                btnElement.innerHTML += `<svg class="w-5 h-5 flex-shrink-0 text-green-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
+
+                explanationBox.className =
+                    "p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border bg-green-900/30 border-green-500/30";
+                feedbackTitle.innerText = "CORRECT!";
+                explanationText.innerText = q.explanation;
+                feedbackArea.classList.remove('hidden');
+                retryBtn.classList.add('hidden');
+                optionsContainer.classList.add('pointer-events-none');
+
+                updateScore();
+                updateProgressBar();
+                renderQuestionNav();
+            } else {
+                state.answered = false;
+                state.isCorrect = false;
+                state.selectedIndex = null;
+
+                btnElement.className = incorrectOptionClass;
+                btnElement.innerHTML += `<svg class="w-5 h-5 flex-shrink-0 text-red-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+
+                explanationBox.className =
+                    "p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border bg-red-900/30 border-red-500/30";
+                feedbackTitle.innerText = "INCORRECT";
+                explanationText.innerText = q.explanation;
+                feedbackArea.classList.remove('hidden');
+                retryBtn.classList.remove('hidden');
+                optionsContainer.classList.add('pointer-events-none');
+
+                updateScore();
+                updateProgressBar();
+            }
         }
 
+        retryBtn.onclick = () => {
+            questionStates[currentQuestionIndex] = {
+                answered: false,
+                isCorrect: false,
+                selectedIndex: null
+            };
+            feedbackArea.classList.add('hidden');
+            retryBtn.classList.add('hidden');
+            renderQuestion();
+        };
+
         nextBtn.onclick = () => {
+            const state = questionStates[currentQuestionIndex];
+
+            if (!state.answered || !state.isCorrect) {
+                alert("Get this one correct (or retry) before moving on!");
+                return;
+            }
+
             if (currentQuestionIndex < questions.length - 1) {
                 currentQuestionIndex++;
                 renderQuestion();
@@ -632,36 +779,45 @@
 
         function showResults() {
             progressSection.classList.add('hidden');
-            questionText.parentElement.classList.add('hidden'); // container hidden
+            questionContainer.classList.add('hidden');
             optionsContainer.classList.add('hidden');
             feedbackArea.classList.add('hidden');
+            questionNav.classList.add('hidden');
             resultsSection.classList.remove('hidden');
 
+            updateScore();
             finalScore.innerText = score;
             totalQuestionsSpan.innerText = questions.length;
 
             if (score >= 27) {
-                finalMessage.innerHTML = `<span class="text-green-300">🎄 Outstanding! You're an E-Commerce Expert! 🎄</span>`;
+                finalMessage.innerHTML =
+                    `<span class="text-green-300">🎄 Outstanding! You're an E-Commerce Expert! 🎄</span>`;
             } else if (score >= 20) {
-                finalMessage.innerHTML = `<span class="text-yellow-300">⛄ Great job! You know your stuff. ⛄</span>`;
+                finalMessage.innerHTML =
+                    `<span class="text-yellow-300">⛄ Great job! You know your stuff. ⛄</span>`;
             } else {
-                finalMessage.innerHTML = `<span class="text-red-300">❄️ Keep studying and try again! ❄️</span>`;
+                finalMessage.innerHTML =
+                    `<span class="text-red-300">❄️ Keep studying and try again! ❄️</span>`;
             }
         }
 
-        window.restartQuiz = function() {
+        window.restartQuiz = function () {
             currentQuestionIndex = 0;
+            questionStates = questions.map(() => ({
+                answered: false,
+                isCorrect: false,
+                selectedIndex: null
+            }));
             score = 0;
             resultsSection.classList.add('hidden');
             progressSection.classList.remove('hidden');
-            questionText.parentElement.classList.remove('hidden');
+            questionContainer.classList.remove('hidden');
             optionsContainer.classList.remove('hidden');
+            questionNav.classList.remove('hidden');
             renderQuestion();
-        }
+        };
 
-        // Run Init
         init();
-
     </script>
 </body>
 </html>
