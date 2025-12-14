@@ -1,355 +1,543 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>PROPLINE • LEAGUE SCANNER v5</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PROP TERMINAL • HYBRID</title>
 <style>
-  :root {
-    --bg: #09090b; --card: #18181b; --border: #27272a; --text: #e4e4e7;
-    --muted: #a1a1aa; --accent: #3b82f6; --success: #22c55e; --danger: #ef4444; --warn: #eab308;
-    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); display: flex; flex-direction: column; min-height: 100vh; }
+    :root {
+        --bg: #050505;
+        --panel: #111111;
+        --border: #333333;
+        --accent: #d4ff00; /* Acid Green */
+        --text: #eeeeee;
+        --muted: #777777;
+        --danger: #ff4444;
+        --success: #00cc66;
+        --font: 'Courier New', Courier, monospace; /* Terminal vibe */
+    }
 
-  /* Header */
-  header {
-    background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border); padding: 16px 20px;
-    position: sticky; top: 0; z-index: 100;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .brand { font-weight: 800; font-size: 18px; color: #fff; letter-spacing: -0.5px; }
-  .date-badge { font-size: 11px; color: var(--muted); font-family: monospace; }
-  
-  main { max-width: 900px; margin: 0 auto; width: 100%; padding: 16px; flex: 1; }
+    * { box-sizing: border-box; }
 
-  /* Components */
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  
-  /* Buttons & Inputs */
-  button {
-    background: #27272a; border: 1px solid #3f3f46; color: var(--text);
-    padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: all 0.2s;
-  }
-  button:hover { background: #3f3f46; }
-  button.active { background: var(--accent); color: white; border-color: var(--accent); }
-  button.scan-btn { flex: 1; text-align: center; }
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
 
-  input {
-    background: #27272a; border: 1px solid #3f3f46; color: white;
-    padding: 10px; border-radius: 6px; width: 100%; outline: none;
-  }
+    /* Top Bar */
+    header {
+        border-bottom: 1px solid var(--border);
+        padding: 15px;
+        background: var(--panel);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-  /* Leaderboard Table */
-  .table-container { overflow-x: auto; margin-top: 12px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
-  th { text-align: left; padding: 10px; color: var(--muted); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
-  td { padding: 10px; border-bottom: 1px solid #27272a; }
-  
-  /* Status Bar */
-  .progress-bar { height: 4px; background: #27272a; margin-top: 12px; border-radius: 2px; overflow: hidden; display: none; }
-  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+    .logo {
+        font-weight: 900;
+        letter-spacing: -1px;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-  /* Indicators */
-  .score-high { color: var(--success); font-weight: 700; }
-  .score-low { color: var(--danger); font-weight: 700; }
-  .score-mid { color: var(--warn); }
-  
-  /* Detail View */
-  .log-row { font-family: monospace; font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 6px; }
-  .hit { color: var(--success); } .miss { color: var(--danger); }
+    .live-dot {
+        height: 8px; width: 8px;
+        background: var(--danger);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--danger);
+        animation: pulse 2s infinite;
+    }
 
-  .hidden { display: none; }
+    /* Main Layout */
+    .layout {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* Sidebar (Live Games) */
+    .sidebar {
+        width: 300px;
+        border-right: 1px solid var(--border);
+        background: #0a0a0a;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .sidebar-header {
+        padding: 15px;
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+    }
+
+    .game-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .game-card {
+        padding: 15px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .game-card:hover { background: #1a1a1a; }
+    .game-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+    .game-time { font-size: 11px; color: var(--accent); }
+    .score { font-weight: 700; color: #fff; }
+
+    /* Main Content */
+    .workspace {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Search Module */
+    .search-box {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    input[type="text"] {
+        flex: 1;
+        background: #000;
+        border: 1px solid var(--border);
+        color: #fff;
+        padding: 15px;
+        font-size: 16px;
+        border-radius: 6px;
+        outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+
+    button {
+        background: var(--text);
+        color: var(--bg);
+        border: none;
+        padding: 0 25px;
+        font-weight: 700;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    button:hover { opacity: 0.9; }
+
+    /* Analysis Panel */
+    #analysisPanel { display: none; }
+
+    .player-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+
+    .stat-row {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .stat-tile {
+        background: #000;
+        border: 1px solid var(--border);
+        padding: 15px;
+        border-radius: 8px;
+        min-width: 120px;
+        text-align: center;
+    }
+    .stat-num { font-size: 24px; font-weight: 800; color: #fff; display: block; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-top: 5px; display: block; }
+
+    /* Calculator Mode */
+    .calc-mode {
+        border-top: 1px dashed var(--border);
+        margin-top: 20px;
+        padding-top: 20px;
+    }
+    .manual-input {
+        background: #080808;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        font-family: var(--font);
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    /* Edge Meter */
+    .meter-container {
+        height: 10px;
+        background: #333;
+        border-radius: 5px;
+        margin: 20px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .meter-bar {
+        height: 100%;
+        background: var(--accent);
+        width: 50%;
+        transition: width 0.5s ease;
+    }
+    .meter-center {
+        position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #fff;
+    }
+
+    /* Mobile Hide */
+    @media (max-width: 768px) {
+        .sidebar { display: none; }
+    }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    .hidden { display: none; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">PROPLINE <span style="color:var(--accent)">SCANNER</span></div>
-  <div class="date-badge">DEC 14 2025 • ACTIVE</div>
+    <div class="logo">
+        <div class="live-dot"></div>
+        PROP TERMINAL <span style="font-size:10px; background:#333; padding:2px 6px; border-radius:4px; margin-left:10px;">v5 HYBRID</span>
+    </div>
+    <div style="font-size:12px; color:var(--muted)">DEC 14 2025</div>
 </header>
 
-<main>
-  <div class="card">
-    <div style="font-size:12px; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Select League to Scan</div>
-    <div class="row">
-      <button class="scan-btn" onclick="scanner.start('nfl')">SCAN NFL (WK 15)</button>
-      <button class="scan-btn" onclick="scanner.start('nba')">SCAN NBA</button>
-      <button class="scan-btn" onclick="scanner.start('nhl')">SCAN NHL</button>
-    </div>
-    
-    <div class="row" style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px;">
-      <input id="singleInput" placeholder="Or type single player..." style="flex:1" onkeydown="if(event.key==='Enter') scanner.single()">
-      <button onclick="scanner.single()">Search One</button>
+<div class="layout">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            NFL • NBA • NHL (LIVE)
+        </div>
+        <div id="gamesList" class="game-list">
+            <div style="padding:15px; color:#555;">Loading Scores...</div>
+        </div>
     </div>
 
-    <div id="progressBox" class="progress-bar">
-      <div id="progressFill" class="progress-fill"></div>
-    </div>
-    <div id="statusTxt" style="font-size:12px; color:var(--muted); margin-top:8px; min-height:16px;">System Ready.</div>
-  </div>
+    <div class="workspace">
+        
+        <div class="search-box">
+            <label style="display:block; margin-bottom:10px; font-size:12px; color:var(--muted);">PLAYER SEARCH OR MANUAL ENTRY</label>
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="Search (e.g. Mahomes) or Team (e.g. Chiefs)..." onkeydown="if(event.key==='Enter') runSearch()">
+                <button onclick="runSearch()">ANALYZE</button>
+            </div>
+            <div id="msgBox" style="margin-top:10px; font-size:12px; color:var(--accent);">System Ready.</div>
+        </div>
 
-  <div class="card">
-    <div class="row" style="justify-content:space-between">
-      <h3 style="margin:0; font-size:16px;">Live Opportunities</h3>
-      <button onclick="scanner.clear()" style="padding:4px 8px; font-size:11px;">Clear</button>
+        <div id="analysisPanel">
+            <div class="player-card">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <h1 id="pName" style="margin:0; font-size:28px;">PLAYER NAME</h1>
+                        <div id="pTeam" style="color:var(--muted); font-size:14px; margin-top:5px;">TEAM • POS</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:12px; color:var(--muted);">TARGET LINE</span>
+                        <input type="number" id="propLine" value="20.5" style="width:70px; padding:5px; background:#000; border:1px solid #333; color:#fff; display:block; margin-top:5px;" onchange="recalc()">
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;">
+                        <span>UNDER</span>
+                        <span id="probText" style="color:var(--accent); font-weight:bold;">NEUTRAL</span>
+                        <span>OVER</span>
+                    </div>
+                    <div class="meter-container">
+                        <div class="meter-center"></div>
+                        <div id="meterBar" class="meter-bar"></div>
+                    </div>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-tile">
+                        <span class="stat-num" id="valAvg">--</span>
+                        <span class="stat-label">Average (L5)</span>
+                    </div>
+                    <div class="stat-tile">
+                        <span class="stat-num" id="valHit">--%</span>
+                        <span class="stat-label">Hit Rate</span>
+                    </div>
+                    <div class="stat-tile">
+                        <span class="stat-num" id="valTrend" style="color:var(--muted)">--</span>
+                        <span class="stat-label">Trend</span>
+                    </div>
+                </div>
+
+                <div class="calc-mode">
+                    <div style="font-size:12px; font-weight:700; color:var(--accent); margin-bottom:8px;">
+                        DATA SOURCE: <span id="sourceLabel">AUTO</span>
+                    </div>
+                    <p style="font-size:12px; color:var(--muted); margin:0;">
+                        If auto-data is incorrect or blocked, paste recent games below to override.
+                    </p>
+                    <input type="text" id="manualData" class="manual-input" placeholder="e.g. 22 14 30 15 20" oninput="manualOverride()">
+                </div>
+
+            </div>
+        </div>
+
     </div>
-    <div class="table-container">
-      <table id="resultsTable">
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Stat</th>
-            <th>Target</th>
-            <th>Hit Rate</th>
-            <th>Confidence</th>
-            <th>Avg</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-  </div>
-</main>
+</div>
 
 <script>
-/* PROPLINE V5: BATCH SCANNER
-  Dec 14, 2025 Context
+/* PROP TERMINAL V5
+   Feature: Graceful Degradation.
+   1. Live Scores (Public API)
+   2. Player Search (Hidden API)
+   3. Auto-Data (Scraping) -> Fallback to Manual Calc
 */
 
-// --- PRESET TARGETS (The "Entire" League Sample) ---
-const TARGETS = {
-  nfl: [
-    "Patrick Mahomes", "Lamar Jackson", "Josh Allen", "Christian McCaffrey", "Derrick Henry",
-    "Jalen Hurts", "Saquon Barkley", "Justin Jefferson", "Tyreek Hill", "Amon-Ra St. Brown",
-    "CeeDee Lamb", "Ja'Marr Chase", "Kyren Williams", "Joe Burrow", "Jahmyr Gibbs"
-  ],
-  nba: [
-    "Nikola Jokic", "Luka Doncic", "Giannis Antetokounmpo", "Shai Gilgeous-Alexander", "Jayson Tatum",
-    "Joel Embiid", "Stephen Curry", "LeBron James", "Kevin Durant", "Devin Booker",
-    "Anthony Edwards", "Trae Young", "Donovan Mitchell", "Victor Wembanyama"
-  ],
-  nhl: [
-    "Connor McDavid", "Nathan MacKinnon", "Nikita Kucherov", "Auston Matthews", "David Pastrnak",
-    "Artemi Panarin", "Jack Eichel", "Mikko Rantanen", "Leon Draisaitl", "Sidney Crosby"
-  ]
+const APP = {
+    proxy: "https://api.allorigins.win/get?url=",
+    data: [], // Stores current numbers
+    
+    init: () => {
+        APP.fetchScores('football/nfl'); // Default to NFL
+        APP.fetchScores('basketball/nba');
+        // Simple polling for live scores every 60s
+        setInterval(() => APP.fetchScores('football/nfl'), 60000);
+    },
+
+    /* --- LIVE SCOREBOARD (Open API) --- */
+    fetchScores: async (sportPath) => {
+        // ESPN V2 Public API (Reliable)
+        const url = `https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard`;
+        try {
+            const res = await fetch(url);
+            const json = await res.json();
+            APP.renderScores(json.events || []);
+        } catch(e) {
+            console.log("Score fetch error", e);
+        }
+    },
+
+    renderScores: (games) => {
+        const list = document.getElementById('gamesList');
+        // Clear "Loading" text on first load
+        if(list.innerText.includes("Loading")) list.innerHTML = "";
+        
+        games.forEach(g => {
+            const c = g.competitions[0];
+            const home = c.competitors.find(x => x.homeAway === 'home');
+            const away = c.competitors.find(x => x.homeAway === 'away');
+            const status = g.status.type.shortDetail;
+            
+            // Avoid duplicates (simple check)
+            if(document.getElementById(`g-${g.id}`)) return;
+
+            const div = document.createElement('div');
+            div.id = `g-${g.id}`;
+            div.className = 'game-card';
+            div.innerHTML = `
+                <div class="game-row">
+                    <span>${away.team.abbreviation} @ ${home.team.abbreviation}</span>
+                    <span class="game-time">${status}</span>
+                </div>
+                <div class="game-row">
+                    <span class="score">${away.score} - ${home.score}</span>
+                </div>
+            `;
+            list.prepend(div);
+        });
+    },
+
+    /* --- SEARCH ENGINE --- */
+    search: async () => {
+        const q = document.getElementById('searchInput').value.trim();
+        if(!q) return;
+        
+        APP.msg("Searching database...", "normal");
+        
+        try {
+            // 1. Search Player
+            const sUrl = `https://site.web.api.espn.com/apis/common/v3/search?region=us&lang=en&short=true&limit=1&type=player&query=${encodeURIComponent(q)}`;
+            const res = await fetch(APP.proxy + encodeURIComponent(sUrl));
+            if(!res.ok) throw new Error("Connection failed");
+            
+            const json = await res.json();
+            const data = JSON.parse(json.contents);
+            
+            if(!data.items || data.items.length === 0) {
+                // If no player found, maybe it's a manual request?
+                APP.msg("Player not found in DB. Enabling Manual Mode.", "err");
+                APP.enableManualMode(q);
+                return;
+            }
+
+            const p = data.items[0];
+            const id = p.url.match(/\/id\/(\d+)\//)[1];
+            
+            // Detect League
+            let league = 'nba';
+            if(p.url.includes('nfl')) league = 'nfl';
+            else if(p.url.includes('nhl')) league = 'nhl';
+
+            APP.loadPlayerUI(p.displayName, p.subtitle || league.toUpperCase());
+            
+            // 2. Try Fetch Logs
+            APP.msg(`Found ${p.displayName}. Fetching logs...`, "normal");
+            await APP.fetchLogs(id, league);
+
+        } catch(e) {
+            APP.msg("Auto-fetch failed. Switch to manual input below.", "err");
+            APP.enableManualMode(q);
+        }
+    },
+
+    /* --- DATA PARSER --- */
+    fetchLogs: async (id, league) => {
+        // Cache buster
+        const url = `https://www.espn.com/${league}/player/gamelog/_/id/${id}?t=${Date.now()}`;
+        
+        try {
+            const res = await fetch(APP.proxy + encodeURIComponent(url));
+            const json = await res.json();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(json.contents, "text/html");
+            
+            // Robust Scraping: Look for row arrays
+            const rows = Array.from(doc.querySelectorAll('.Table__TBODY tr'));
+            const vals = [];
+            
+            // Determine column index based on league defaults
+            // NBA: PTS (Last), NFL: YDS (Variable), NHL: SOG (Variable)
+            let colIdx = -1;
+            
+            // We scan the first row to find a valid number
+            rows.slice(0, 10).forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if(cells.length < 4) return;
+                
+                // Heuristic: Last column is usually Points/Yards
+                // We try to grab the last cell with a number
+                let val = 0;
+                if(league === 'nba') val = Number(cells[cells.length-1].innerText); // PTS
+                else if(league === 'nhl') val = Number(cells[cells.length-3].innerText); // SOG (approx)
+                else if(league === 'nfl') {
+                     // NFL is hard. Let's grab the biggest number in cols 3-6 (likely yards)
+                     const c3 = Number(cells[3]?.innerText||0);
+                     const c4 = Number(cells[4]?.innerText||0);
+                     val = Math.max(c3,c4);
+                }
+
+                if(!isNaN(val)) vals.push(val);
+            });
+
+            if(vals.length === 0) throw new Error("Parse failed");
+            
+            APP.data = vals;
+            document.getElementById('manualData').value = vals.join(" "); // Fill manual box
+            document.getElementById('sourceLabel').innerText = "LIVE AUTO";
+            APP.recalc();
+            APP.msg("Data loaded successfully.", "success");
+
+        } catch(e) {
+            throw e; // Pass to catch block in search()
+        }
+    },
+
+    /* --- LOGIC KERNEL --- */
+    recalc: () => {
+        const line = parseFloat(document.getElementById('propLine').value) || 0;
+        const vals = APP.data;
+        
+        if(vals.length === 0) return;
+
+        // Stats
+        const sum = vals.reduce((a,b)=>a+b,0);
+        const avg = sum / vals.length;
+        const hits = vals.filter(v => v > line).length;
+        const rate = (hits / vals.length) * 100;
+        
+        // Z-Score for Meter
+        // Standard Deviation
+        const sd = Math.sqrt(vals.reduce((t,v)=>t+Math.pow(v-avg,2),0)/(vals.length-1)) || 1;
+        const z = (avg - line) / sd; // Positive = Over, Negative = Under
+        
+        // Map Z (-2 to 2) to Percentage (0% to 100%)
+        let meterPct = ((z + 2) / 4) * 100;
+        meterPct = Math.max(5, Math.min(95, meterPct)); // Clamp
+
+        // Render
+        document.getElementById('valAvg').innerText = avg.toFixed(1);
+        document.getElementById('valHit').innerText = rate.toFixed(0) + "%";
+        document.getElementById('valTrend').innerText = vals[0] > vals[vals.length-1] ? "UP" : "FLAT";
+        
+        const bar = document.getElementById('meterBar');
+        bar.style.width = meterPct + "%";
+        bar.style.background = meterPct > 60 ? "var(--success)" : meterPct < 40 ? "var(--danger)" : "var(--muted)";
+        
+        const txt = document.getElementById('probText');
+        txt.innerText = meterPct > 60 ? "LEAN OVER" : meterPct < 40 ? "LEAN UNDER" : "NEUTRAL";
+        txt.style.color = bar.style.background;
+    },
+
+    /* --- MANUAL FALLBACK --- */
+    enableManualMode: (name) => {
+        APP.loadPlayerUI(name || "Custom Player", "Manual Mode");
+        document.getElementById('sourceLabel').innerText = "MANUAL ENTRY";
+        document.getElementById('manualData').focus();
+    },
+
+    manualOverride: () => {
+        const str = document.getElementById('manualData').value;
+        const arr = str.trim().split(/[\s,]+/).map(Number).filter(n => !isNaN(n));
+        if(arr.length > 0) {
+            APP.data = arr;
+            APP.recalc();
+        }
+    },
+
+    loadPlayerUI: (name, team) => {
+        document.getElementById('analysisPanel').style.display = 'block';
+        document.getElementById('pName').innerText = name;
+        document.getElementById('pTeam').innerText = team;
+        APP.msg("Ready for analysis.", "normal");
+    },
+
+    msg: (txt, type) => {
+        const el = document.getElementById('msgBox');
+        el.innerText = "> " + txt;
+        el.style.color = type === 'err' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : 'var(--accent)';
+    }
 };
 
-const scanner = {
-  proxy: "https://api.allorigins.win/get?url=",
-  activeResults: [],
-  isScanning: false,
+// Global Binder
+window.runSearch = APP.search;
+window.recalc = APP.recalc;
+window.manualOverride = APP.manualOverride;
 
-  // --- CONTROLS ---
-  start: async (league) => {
-    if(scanner.isScanning) return;
-    scanner.isScanning = true;
-    scanner.activeResults = []; // Reset
-    document.getElementById('tableBody').innerHTML = "";
-    document.getElementById('progressBox').style.display = 'block';
-    
-    const list = TARGETS[league];
-    scanner.log(`Initializing ${league.toUpperCase()} scan (${list.length} players)...`);
+// Start
+APP.init();
 
-    for(let i=0; i<list.length; i++){
-      const p = list[i];
-      const pct = ((i+1) / list.length) * 100;
-      document.getElementById('progressFill').style.width = `${pct}%`;
-      scanner.log(`Scanning [${i+1}/${list.length}]: ${p}...`);
-
-      try {
-        await scanner.processPlayer(p, league);
-      } catch(e) {
-        console.warn(`Skipped ${p}: ${e.message}`);
-      }
-      
-      // Delay to respect rate limits & proxy health
-      await new Promise(r => setTimeout(r, 1500));
-    }
-
-    scanner.log(`Scan Complete. Found ${scanner.activeResults.length} active lines.`);
-    scanner.isScanning = false;
-    setTimeout(() => { document.getElementById('progressBox').style.display = 'none'; }, 2000);
-  },
-
-  single: async () => {
-    const name = document.getElementById('singleInput').value;
-    if(!name) return;
-    scanner.log(`Searching ${name}...`);
-    try {
-      // Auto-detect league hack: try NBA, if fail try NFL
-      await scanner.processPlayer(name, 'nba'); 
-    } catch(e) {
-       try { await scanner.processPlayer(name, 'nfl'); }
-       catch(e2) { try { await scanner.processPlayer(name, 'nhl'); } catch(e3) { scanner.log("Player not found."); } }
-    }
-  },
-
-  clear: () => {
-    document.getElementById('tableBody').innerHTML = "";
-    scanner.activeResults = [];
-  },
-
-  log: (msg) => { document.getElementById('statusTxt').textContent = msg; },
-
-  // --- CORE LOGIC ---
-  processPlayer: async (name, league) => {
-    // 1. Search ID
-    const ts = Date.now();
-    const sUrl = `https://site.web.api.espn.com/apis/common/v3/search?region=us&lang=en&short=true&limit=1&type=player&query=${encodeURIComponent(name)}&_=${ts}`;
-    const sRes = await fetch(scanner.proxy + encodeURIComponent(sUrl));
-    const sJson = await sRes.json();
-    const data = JSON.parse(sJson.contents);
-    
-    if(!data.items?.length) throw new Error("No ID");
-    const item = data.items[0];
-    const id = item.url.match(/\/id\/(\d+)\//)[1];
-    const realLeague = item.url.includes("nfl")?"nfl":item.url.includes("nhl")?"nhl":"nba";
-
-    // 2. Fetch Logs
-    const lUrl = `https://www.espn.com/${realLeague}/player/gamelog/_/id/${id}?t=${ts}`;
-    const lRes = await fetch(scanner.proxy + encodeURIComponent(lUrl));
-    const lJson = await lRes.json();
-    
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(lJson.contents, "text/html");
-    
-    // 3. Smart Parse
-    const rows = Array.from(doc.querySelectorAll('.Table__TBODY tr'));
-    const headerRow = doc.querySelector('.Table__THEAD tr');
-    
-    // Column Mapping
-    const getIdx = (txts) => {
-      if(!headerRow) return -1;
-      const cells = Array.from(headerRow.querySelectorAll('th, td'));
-      return cells.findIndex(c => txts.some(t => c.textContent.toUpperCase().includes(t)));
-    };
-
-    let valIdx = -1;
-    let statLabel = "PTS";
-    let line = 19.5; // Default
-
-    if(realLeague === 'nba') { 
-      valIdx = getIdx(['PTS']); 
-      if(valIdx === -1) valIdx = rows[0]?.querySelectorAll('td').length - 1; 
-      statLabel = "Points"; 
-      line = 24.5;
-    } 
-    else if(realLeague === 'nhl') { 
-      valIdx = getIdx(['SOG', 'SH']); 
-      if(valIdx === -1) valIdx = rows[0]?.querySelectorAll('td').length - 3; 
-      statLabel = "SOG"; 
-      line = 3.5;
-    }
-    else if(realLeague === 'nfl') { 
-      // Auto-detect Position preference
-      const isQB = getIdx(['PASS']) > -1;
-      valIdx = getIdx(['YDS']);
-      statLabel = "Yards";
-      line = isQB ? 245.5 : 65.5; 
-    }
-
-    // Extract Values
-    const vals = [];
-    const logs = [];
-    rows.slice(0, 10).forEach(r => {
-      const cells = r.querySelectorAll('td');
-      if(cells.length < 4) return;
-      if(!cells[0].textContent.match(/^[A-Za-z]{3}\s\d+\/\d+/)) return;
-      
-      const v = Number(cells[valIdx].textContent);
-      if(!isNaN(v)) {
-        vals.push(v);
-        logs.push(v);
-      }
-    });
-
-    if(!vals.length) return;
-
-    // 4. Calculate Edge
-    // Dynamic Line Adjustment: Set line to Average rounded
-    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-    line = Math.round(avg * 2) / 2; // Round to nearest 0.5
-    
-    const hits = vals.filter(v => v > line).length;
-    const hitRate = (hits/vals.length)*100;
-    
-    // Z-Score Confidence
-    const sd = Math.sqrt(vals.reduce((t,v)=>t+Math.pow(v-avg,2),0)/(vals.length-1)) || 1;
-    const z = (avg - line) / sd;
-    let conf = 0.5 * (1 + Math.erf(z / Math.sqrt(2)));
-    conf = Math.max(0, Math.min(100, conf*100));
-
-    // Store
-    scanner.activeResults.push({
-      name: item.displayName,
-      league: realLeague,
-      stat: statLabel,
-      line: line,
-      hitRate: hitRate,
-      conf: conf,
-      avg: avg,
-      logs: logs
-    });
-
-    scanner.render();
-  },
-
-  render: () => {
-    // Sort by Confidence (Distance from 50%)
-    scanner.activeResults.sort((a,b) => {
-      const edgeA = Math.abs(a.conf - 50);
-      const edgeB = Math.abs(b.conf - 50);
-      return edgeB - edgeA; // Highest edge first
-    });
-
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = "";
-
-    scanner.activeResults.forEach(r => {
-      const isOver = r.conf > 50;
-      const colorClass = r.hitRate >= 70 ? 'score-high' : r.hitRate <= 30 ? 'score-low' : 'score-mid';
-      const pick = isOver ? "OVER" : "UNDER";
-      
-      // Mini Log Visualization
-      const logViz = r.logs.slice(0,5).map(v => 
-        `<span class="${v > r.line ? 'hit' : 'miss'}">${v}</span>`
-      ).join(" ");
-
-      tbody.innerHTML += `
-        <tr>
-          <td>
-            <div style="font-weight:700">${r.name}</div>
-            <div style="font-size:10px; color:var(--muted)">${r.league.toUpperCase()}</div>
-          </td>
-          <td>${r.stat}</td>
-          <td>${r.line}</td>
-          <td class="${colorClass}">${r.hitRate.toFixed(0)}%</td>
-          <td>
-            <div style="font-weight:bold; color:${isOver?'var(--success)':'var(--danger)'}">
-              ${pick} (${r.conf.toFixed(0)}%)
-            </div>
-            <div class="log-row">L5: ${logViz}</div>
-          </td>
-          <td>${r.avg.toFixed(1)}</td>
-        </tr>
-      `;
-    });
-  }
-};
-
-// Math Polyfill
-Math.erf = function(x) {
-  var m = 1.0, s = 1.0, sum = x * 1.0;
-  for(var i = 1; i < 50; i++){
-    m *= i; s *= -1; sum += (s * Math.pow(x, 2 * i + 1)) / (m * (2 * i + 1));
-  }
-  return 2 * sum / Math.sqrt(Math.PI);
-};
 </script>
 </body>
 </html>
