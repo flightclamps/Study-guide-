@@ -2,476 +2,354 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PROPLINE • MASTER TERMINAL</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>PROPLINE • LEAGUE SCANNER v5</title>
 <style>
   :root {
-    --bg: #09090b;
-    --card: #18181b;
-    --border: #27272a;
-    --text: #e4e4e7;
-    --muted: #a1a1aa;
-    --accent: #3b82f6; /* Blue */
-    --success: #22c55e; /* Green */
-    --danger: #ef4444; /* Red */
-    --warning: #eab308; /* Yellow */
+    --bg: #09090b; --card: #18181b; --border: #27272a; --text: #e4e4e7;
+    --muted: #a1a1aa; --accent: #3b82f6; --success: #22c55e; --danger: #ef4444; --warn: #eab308;
     --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
-
-  * { box-sizing: border-box; }
-
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    overflow-y: scroll;
-  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); display: flex; flex-direction: column; min-height: 100vh; }
 
   /* Header */
   header {
-    background: rgba(9, 9, 11, 0.95);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); padding: 16px 20px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
   }
-
-  .brand { font-weight: 700; letter-spacing: -0.5px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-  .badge { background: var(--accent); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
-  .badge.live { background: var(--danger); animation: pulse 2s infinite; }
-
-  /* Layout */
-  main {
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-    padding: 24px;
-    flex: 1;
-  }
+  .brand { font-weight: 800; font-size: 18px; color: #fff; letter-spacing: -0.5px; }
+  .date-badge { font-size: 11px; color: var(--muted); font-family: monospace; }
+  
+  main { max-width: 900px; margin: 0 auto; width: 100%; padding: 16px; flex: 1; }
 
   /* Components */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-
-  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .col { display: flex; flex-direction: column; gap: 4px; }
-  .w-full { width: 100%; }
-
-  /* Inputs */
-  input, select, button {
-    background: #27272a;
-    border: 1px solid #3f3f46;
-    color: var(--text);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    outline: none;
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  
+  /* Buttons & Inputs */
+  button {
+    background: #27272a; border: 1px solid #3f3f46; color: var(--text);
+    padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
     transition: all 0.2s;
   }
-
-  input:focus, select:focus { border-color: var(--accent); ring: 2px solid var(--accent); }
-  
-  button { font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
   button:hover { background: #3f3f46; }
-  button.primary { background: var(--text); color: var(--bg); border: 1px solid var(--text); }
-  button.primary:hover { opacity: 0.9; }
+  button.active { background: var(--accent); color: white; border-color: var(--accent); }
+  button.scan-btn { flex: 1; text-align: center; }
 
-  /* Search Bar Specifics */
-  .search-group { position: relative; flex: 1; }
-  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-  #playerSearch { padding-left: 36px; width: 100%; }
+  input {
+    background: #27272a; border: 1px solid #3f3f46; color: white;
+    padding: 10px; border-radius: 6px; width: 100%; outline: none;
+  }
 
-  /* Stats Grid */
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
-  .stat-box { background: #00000040; border: 1px solid var(--border); padding: 12px; border-radius: 8px; text-align: center; }
-  .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-  .stat-val { font-size: 20px; font-weight: 700; color: var(--text); }
-
-  /* Edge Meter */
-  .edge-container { margin-top: 16px; padding: 16px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; }
-  .meter-track { height: 8px; background: #27272a; border-radius: 100px; margin: 12px 0; position: relative; overflow: hidden; }
-  .meter-fill { height: 100%; background: var(--accent); width: 50%; transition: width 0.5s ease; }
-  .meter-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
-
-  /* Logs Table */
-  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
-  .log-table th { text-align: left; padding: 8px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
-  .log-table td { padding: 8px; border-bottom: 1px solid #27272a; }
-  .log-table tr:last-child td { border-bottom: none; }
-  .hit { color: var(--success); font-weight: 600; }
-  .miss { color: var(--danger); }
-
-  /* Utilities */
-  .hidden { display: none !important; }
-  .spin { animation: spin 1s linear infinite; }
+  /* Leaderboard Table */
+  .table-container { overflow-x: auto; margin-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+  th { text-align: left; padding: 10px; color: var(--muted); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
+  td { padding: 10px; border-bottom: 1px solid #27272a; }
   
-  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-  @keyframes spin { 100% { transform: rotate(360deg); } }
+  /* Status Bar */
+  .progress-bar { height: 4px; background: #27272a; margin-top: 12px; border-radius: 2px; overflow: hidden; display: none; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+
+  /* Indicators */
+  .score-high { color: var(--success); font-weight: 700; }
+  .score-low { color: var(--danger); font-weight: 700; }
+  .score-mid { color: var(--warn); }
+  
+  /* Detail View */
+  .log-row { font-family: monospace; font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 6px; }
+  .hit { color: var(--success); } .miss { color: var(--danger); }
+
+  .hidden { display: none; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">
-    <span>PROPLINE</span>
-    <span class="badge live">LIVE CONNECT</span>
-  </div>
-  <div style="font-size: 12px; color: var(--muted);">v3.1 Master</div>
+  <div class="brand">PROPLINE <span style="color:var(--accent)">SCANNER</span></div>
+  <div class="date-badge">DEC 14 2025 • ACTIVE</div>
 </header>
 
 <main>
   <div class="card">
+    <div style="font-size:12px; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Select League to Scan</div>
     <div class="row">
-      <div class="search-group">
-        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <input id="playerSearch" placeholder="Search Player (e.g. LeBron, McDavid, Mahomes)..." onkeydown="if(event.key==='Enter') app.search()">
-      </div>
-      <button class="primary" onclick="app.search()" id="searchBtn">
-        <span>Analyze</span>
-      </button>
+      <button class="scan-btn" onclick="scanner.start('nfl')">SCAN NFL (WK 15)</button>
+      <button class="scan-btn" onclick="scanner.start('nba')">SCAN NBA</button>
+      <button class="scan-btn" onclick="scanner.start('nhl')">SCAN NHL</button>
     </div>
-    <div id="status" style="margin-top: 8px; font-size: 12px; color: var(--muted); min-height: 18px;">Ready. Enter player name.</div>
+    
+    <div class="row" style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px;">
+      <input id="singleInput" placeholder="Or type single player..." style="flex:1" onkeydown="if(event.key==='Enter') scanner.single()">
+      <button onclick="scanner.single()">Search One</button>
+    </div>
+
+    <div id="progressBox" class="progress-bar">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
+    <div id="statusTxt" style="font-size:12px; color:var(--muted); margin-top:8px; min-height:16px;">System Ready.</div>
   </div>
 
-  <div id="dashboard" class="hidden">
-    
-    <div class="card">
-      <div class="row" style="justify-content: space-between;">
-        <div class="col">
-          <h2 id="pName" style="margin: 0; font-size: 24px;">Player Name</h2>
-          <span id="pTeam" style="color: var(--muted); font-size: 14px;">Team • League</span>
-        </div>
-        <div class="col" style="align-items: flex-end;">
-          <div class="row">
-            <span style="font-size: 12px; color: var(--muted);">Target Line:</span>
-            <input type="number" id="targetLine" value="19.5" style="width: 80px;" onchange="app.recalc()">
-          </div>
-          <select id="statType" style="margin-top: 8px; width: 140px;" onchange="app.recalc()">
-            </select>
-        </div>
-      </div>
-
-      <div class="edge-container">
-        <div class="row" style="justify-content: space-between; margin-bottom: 4px;">
-          <strong id="edgeTitle" style="font-size: 14px;">Calculating Edge...</strong>
-          <span id="edgeProb" class="badge">0%</span>
-        </div>
-        <div class="meter-track">
-          <div id="meterFill" class="meter-fill" style="width: 50%;"></div>
-        </div>
-        <div class="meter-labels">
-          <span>Heavy Under</span>
-          <span>Neutral</span>
-          <span>Heavy Over</span>
-        </div>
-      </div>
-
-      <div class="stat-grid">
-        <div class="stat-box">
-          <div class="stat-label">Hit Rate (L10)</div>
-          <div class="stat-val" id="valHitRate">-%</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Average</div>
-          <div class="stat-val" id="valAvg">-</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Last Game</div>
-          <div class="stat-val" id="valLast">-</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Trend (L3)</div>
-          <div class="stat-val" id="valTrend">-</div>
-        </div>
-      </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0; font-size:16px;">Live Opportunities</h3>
+      <button onclick="scanner.clear()" style="padding:4px 8px; font-size:11px;">Clear</button>
     </div>
-
-    <div class="card">
-      <h3 style="margin: 0 0 12px 0; font-size: 16px;">Game Log (Last 10)</h3>
-      <div style="overflow-x: auto;">
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Opponent</th>
-              <th>Stat</th>
-              <th>Result</th>
-            </tr>
-          </thead>
-          <tbody id="logBody"></tbody>
-        </table>
-      </div>
+    <div class="table-container">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Stat</th>
+            <th>Target</th>
+            <th>Hit Rate</th>
+            <th>Confidence</th>
+            <th>Avg</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
     </div>
-
   </div>
 </main>
 
 <script>
-/**
- * PROPLINE MASTER SCRIPT
- * Handles Proxy Fetching, HTML Parsing, and Math
- */
+/* PROPLINE V5: BATCH SCANNER
+  Dec 14, 2025 Context
+*/
 
-const app = {
-  // Config
+// --- PRESET TARGETS (The "Entire" League Sample) ---
+const TARGETS = {
+  nfl: [
+    "Patrick Mahomes", "Lamar Jackson", "Josh Allen", "Christian McCaffrey", "Derrick Henry",
+    "Jalen Hurts", "Saquon Barkley", "Justin Jefferson", "Tyreek Hill", "Amon-Ra St. Brown",
+    "CeeDee Lamb", "Ja'Marr Chase", "Kyren Williams", "Joe Burrow", "Jahmyr Gibbs"
+  ],
+  nba: [
+    "Nikola Jokic", "Luka Doncic", "Giannis Antetokounmpo", "Shai Gilgeous-Alexander", "Jayson Tatum",
+    "Joel Embiid", "Stephen Curry", "LeBron James", "Kevin Durant", "Devin Booker",
+    "Anthony Edwards", "Trae Young", "Donovan Mitchell", "Victor Wembanyama"
+  ],
+  nhl: [
+    "Connor McDavid", "Nathan MacKinnon", "Nikita Kucherov", "Auston Matthews", "David Pastrnak",
+    "Artemi Panarin", "Jack Eichel", "Mikko Rantanen", "Leon Draisaitl", "Sidney Crosby"
+  ]
+};
+
+const scanner = {
   proxy: "https://api.allorigins.win/get?url=",
-  currentLogs: [],
-  currentLeague: "",
-  
-  // UI Helpers
-  log: (msg, isErr) => {
-    const el = document.getElementById('status');
-    el.textContent = msg;
-    el.style.color = isErr ? 'var(--danger)' : 'var(--muted)';
-  },
-  
-  loading: (isLoading) => {
-    const btn = document.getElementById('searchBtn');
-    if(isLoading) {
-      btn.innerHTML = `<svg class="spin" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg> Fetching...`;
-      document.getElementById('dashboard').classList.add('hidden');
-    } else {
-      btn.innerHTML = `<span>Analyze</span>`;
+  activeResults: [],
+  isScanning: false,
+
+  // --- CONTROLS ---
+  start: async (league) => {
+    if(scanner.isScanning) return;
+    scanner.isScanning = true;
+    scanner.activeResults = []; // Reset
+    document.getElementById('tableBody').innerHTML = "";
+    document.getElementById('progressBox').style.display = 'block';
+    
+    const list = TARGETS[league];
+    scanner.log(`Initializing ${league.toUpperCase()} scan (${list.length} players)...`);
+
+    for(let i=0; i<list.length; i++){
+      const p = list[i];
+      const pct = ((i+1) / list.length) * 100;
+      document.getElementById('progressFill').style.width = `${pct}%`;
+      scanner.log(`Scanning [${i+1}/${list.length}]: ${p}...`);
+
+      try {
+        await scanner.processPlayer(p, league);
+      } catch(e) {
+        console.warn(`Skipped ${p}: ${e.message}`);
+      }
+      
+      // Delay to respect rate limits & proxy health
+      await new Promise(r => setTimeout(r, 1500));
     }
+
+    scanner.log(`Scan Complete. Found ${scanner.activeResults.length} active lines.`);
+    scanner.isScanning = false;
+    setTimeout(() => { document.getElementById('progressBox').style.display = 'none'; }, 2000);
   },
 
-  // 1. Search Logic
-  search: async () => {
-    const query = document.getElementById('playerSearch').value.trim();
-    if(!query) return;
-
-    app.loading(true);
-    app.log("Searching player database...");
-
+  single: async () => {
+    const name = document.getElementById('singleInput').value;
+    if(!name) return;
+    scanner.log(`Searching ${name}...`);
     try {
-      // Step A: Find Player ID & League
-      const searchUrl = `https://site.web.api.espn.com/apis/common/v3/search?region=us&lang=en&short=true&limit=5&type=player&query=${encodeURIComponent(query)}`;
-      const res = await fetch(app.proxy + encodeURIComponent(searchUrl));
-      const json = await res.json();
-      
-      if(!json.contents) throw new Error("Proxy connection failed.");
-      const data = JSON.parse(json.contents);
-      const item = data.items?.[0]; // Take top result
-      
-      if(!item) throw new Error("Player not found.");
-      
-      // Parse League from URL (e.g. sport/football/nfl/...)
-      let league = "nba"; // Default fallback
-      if(item.url.includes("nfl")) league = "nfl";
-      else if(item.url.includes("nhl")) league = "nhl";
-      else if(item.url.includes("nba")) league = "nba";
-      
-      // Parse ID
-      const idMatch = item.url.match(/\/id\/(\d+)\//);
-      if(!idMatch) throw new Error("Could not parse player ID.");
-      const id = idMatch[1];
-
-      app.currentLeague = league;
-      document.getElementById('pName').textContent = item.displayName;
-      document.getElementById('pTeam').textContent = `${item.subtitle || ""} • ${league.toUpperCase()}`;
-
-      // Step B: Fetch Logs
-      app.log(`Fetching ${league.toUpperCase()} game logs...`);
-      const logs = await app.fetchLogs(id, league);
-      
-      if(!logs.length) throw new Error("No recent logs found (Season might be over).");
-      
-      app.currentLogs = logs;
-      app.initStatsDropdown(league, logs[0].stats);
-      document.getElementById('dashboard').classList.remove('hidden');
-      app.recalc();
-      app.log("Data loaded successfully.");
-      
+      // Auto-detect league hack: try NBA, if fail try NFL
+      await scanner.processPlayer(name, 'nba'); 
     } catch(e) {
-      app.log(e.message, true);
-      console.error(e);
-    } finally {
-      app.loading(false);
+       try { await scanner.processPlayer(name, 'nfl'); }
+       catch(e2) { try { await scanner.processPlayer(name, 'nhl'); } catch(e3) { scanner.log("Player not found."); } }
     }
   },
 
-  // 2. The "Pro" Scraper (Smart Column Detection)
-  fetchLogs: async (id, league) => {
-    const url = `https://www.espn.com/${league}/player/gamelog/_/id/${id}`;
-    const res = await fetch(app.proxy + encodeURIComponent(url));
-    const json = await res.json();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(json.contents, "text/html");
+  clear: () => {
+    document.getElementById('tableBody').innerHTML = "";
+    scanner.activeResults = [];
+  },
 
-    // Helper: Find index of a header text
-    const getIdx = (row, txts) => {
-      const cells = Array.from(row.querySelectorAll('th, td'));
+  log: (msg) => { document.getElementById('statusTxt').textContent = msg; },
+
+  // --- CORE LOGIC ---
+  processPlayer: async (name, league) => {
+    // 1. Search ID
+    const ts = Date.now();
+    const sUrl = `https://site.web.api.espn.com/apis/common/v3/search?region=us&lang=en&short=true&limit=1&type=player&query=${encodeURIComponent(name)}&_=${ts}`;
+    const sRes = await fetch(scanner.proxy + encodeURIComponent(sUrl));
+    const sJson = await sRes.json();
+    const data = JSON.parse(sJson.contents);
+    
+    if(!data.items?.length) throw new Error("No ID");
+    const item = data.items[0];
+    const id = item.url.match(/\/id\/(\d+)\//)[1];
+    const realLeague = item.url.includes("nfl")?"nfl":item.url.includes("nhl")?"nhl":"nba";
+
+    // 2. Fetch Logs
+    const lUrl = `https://www.espn.com/${realLeague}/player/gamelog/_/id/${id}?t=${ts}`;
+    const lRes = await fetch(scanner.proxy + encodeURIComponent(lUrl));
+    const lJson = await lRes.json();
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(lJson.contents, "text/html");
+    
+    // 3. Smart Parse
+    const rows = Array.from(doc.querySelectorAll('.Table__TBODY tr'));
+    const headerRow = doc.querySelector('.Table__THEAD tr');
+    
+    // Column Mapping
+    const getIdx = (txts) => {
+      if(!headerRow) return -1;
+      const cells = Array.from(headerRow.querySelectorAll('th, td'));
       return cells.findIndex(c => txts.some(t => c.textContent.toUpperCase().includes(t)));
     };
 
+    let valIdx = -1;
+    let statLabel = "PTS";
+    let line = 19.5; // Default
+
+    if(realLeague === 'nba') { 
+      valIdx = getIdx(['PTS']); 
+      if(valIdx === -1) valIdx = rows[0]?.querySelectorAll('td').length - 1; 
+      statLabel = "Points"; 
+      line = 24.5;
+    } 
+    else if(realLeague === 'nhl') { 
+      valIdx = getIdx(['SOG', 'SH']); 
+      if(valIdx === -1) valIdx = rows[0]?.querySelectorAll('td').length - 3; 
+      statLabel = "SOG"; 
+      line = 3.5;
+    }
+    else if(realLeague === 'nfl') { 
+      // Auto-detect Position preference
+      const isQB = getIdx(['PASS']) > -1;
+      valIdx = getIdx(['YDS']);
+      statLabel = "Yards";
+      line = isQB ? 245.5 : 65.5; 
+    }
+
+    // Extract Values
+    const vals = [];
     const logs = [];
-    const rows = Array.from(doc.querySelectorAll('.Table__TBODY tr'));
-    // Attempt to find the header row (thead) to map columns
-    const headerRow = doc.querySelector('.Table__THEAD tr');
-
-    rows.forEach(row => {
-      const cells = row.querySelectorAll('td');
-      if(cells.length < 5) return;
-      const dateTxt = cells[0].textContent;
-      if(!dateTxt.match(/^[A-Za-z]{3}\s\d+\/\d+/)) return; // Valid date check
-
-      let stats = {};
+    rows.slice(0, 10).forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if(cells.length < 4) return;
+      if(!cells[0].textContent.match(/^[A-Za-z]{3}\s\d+\/\d+/)) return;
       
-      // Default Indices (Fallbacks)
-      let ptsIdx = -1, rebIdx = -1, astIdx = -1, sogIdx = -1, ydsIdx = -1, tdIdx = -1;
-
-      // Smart Map via Header
-      if(headerRow) {
-        if(league === 'nba') {
-          ptsIdx = getIdx(headerRow, ['PTS']);
-          rebIdx = getIdx(headerRow, ['REB']);
-          astIdx = getIdx(headerRow, ['AST']);
-        } else if(league === 'nhl') {
-          sogIdx = getIdx(headerRow, ['SOG', 'SH']);
-          ptsIdx = getIdx(headerRow, ['PTS']);
-        } else if(league === 'nfl') {
-          // NFL tables vary (Passing vs Rushing). 
-          // We look for YDS generically. If multiple YDS, usually 1st is the primary category.
-          ydsIdx = getIdx(headerRow, ['YDS']); 
-          tdIdx = getIdx(headerRow, ['TD']);
-          // Rec count
-          const recIdx = getIdx(headerRow, ['REC']);
-          if(recIdx > -1) stats.receptions = Number(cells[recIdx].textContent);
-        }
+      const v = Number(cells[valIdx].textContent);
+      if(!isNaN(v)) {
+        vals.push(v);
+        logs.push(v);
       }
-
-      // Extraction with Fallbacks
-      if(league === 'nba') {
-        stats.pts = Number(cells[ptsIdx > -1 ? ptsIdx : cells.length-1].textContent);
-        stats.reb = Number(cells[rebIdx > -1 ? rebIdx : cells.length-7].textContent);
-        stats.ast = Number(cells[astIdx > -1 ? astIdx : cells.length-6].textContent);
-        stats.pra = stats.pts + stats.reb + stats.ast;
-      } 
-      else if(league === 'nhl') {
-        stats.sog = Number(cells[sogIdx > -1 ? sogIdx : cells.length-3].textContent) || 0;
-        stats.pts = Number(cells[ptsIdx > -1 ? ptsIdx : 5].textContent);
-      }
-      else if(league === 'nfl') {
-        stats.yards = Number(cells[ydsIdx > -1 ? ydsIdx : 3].textContent) || 0; // fallback to col 3
-        stats.td = Number(cells[tdIdx > -1 ? tdIdx : cells.length-2].textContent) || 0;
-      }
-
-      logs.push({ date: dateTxt, opp: cells[1].textContent, stats });
     });
 
-    return logs.slice(0, 10); // Last 10
-  },
+    if(!vals.length) return;
 
-  // 3. UI Logic
-  initStatsDropdown: (league, sampleStats) => {
-    const sel = document.getElementById('statType');
-    sel.innerHTML = "";
-    Object.keys(sampleStats).forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k;
-      opt.textContent = k.toUpperCase();
-      sel.appendChild(opt);
-    });
-    // Defaults
-    if(league==='nba') sel.value = 'pts';
-    if(league==='nhl') sel.value = 'sog';
-    if(league==='nfl') sel.value = 'yards';
-  },
-
-  recalc: () => {
-    const key = document.getElementById('statType').value;
-    const line = parseFloat(document.getElementById('targetLine').value) || 0;
-    const vals = app.currentLogs.map(g => g.stats[key] || 0);
+    // 4. Calculate Edge
+    // Dynamic Line Adjustment: Set line to Average rounded
+    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+    line = Math.round(avg * 2) / 2; // Round to nearest 0.5
     
-    // Stats
-    const m = vals.reduce((a,b)=>a+b,0) / vals.length;
     const hits = vals.filter(v => v > line).length;
-    const hitRate = (hits / vals.length) * 100;
-    const last = vals[0];
-    const trend = vals.slice(0,3).reduce((a,b)=>a+b,0)/3;
-
-    // Render Grid
-    document.getElementById('valHitRate').textContent = `${hitRate.toFixed(0)}%`;
-    document.getElementById('valHitRate').style.color = hitRate >= 60 ? 'var(--success)' : hitRate <= 40 ? 'var(--danger)' : 'var(--text)';
+    const hitRate = (hits/vals.length)*100;
     
-    document.getElementById('valAvg').textContent = m.toFixed(1);
-    document.getElementById('valLast').textContent = last;
-    document.getElementById('valTrend').textContent = trend.toFixed(1);
+    // Z-Score Confidence
+    const sd = Math.sqrt(vals.reduce((t,v)=>t+Math.pow(v-avg,2),0)/(vals.length-1)) || 1;
+    const z = (avg - line) / sd;
+    let conf = 0.5 * (1 + Math.erf(z / Math.sqrt(2)));
+    conf = Math.max(0, Math.min(100, conf*100));
 
-    // Render Table
-    const tbody = document.getElementById('logBody');
+    // Store
+    scanner.activeResults.push({
+      name: item.displayName,
+      league: realLeague,
+      stat: statLabel,
+      line: line,
+      hitRate: hitRate,
+      conf: conf,
+      avg: avg,
+      logs: logs
+    });
+
+    scanner.render();
+  },
+
+  render: () => {
+    // Sort by Confidence (Distance from 50%)
+    scanner.activeResults.sort((a,b) => {
+      const edgeA = Math.abs(a.conf - 50);
+      const edgeB = Math.abs(b.conf - 50);
+      return edgeB - edgeA; // Highest edge first
+    });
+
+    const tbody = document.getElementById('tableBody');
     tbody.innerHTML = "";
-    app.currentLogs.forEach(g => {
-      const val = g.stats[key] || 0;
-      const isHit = val > line;
+
+    scanner.activeResults.forEach(r => {
+      const isOver = r.conf > 50;
+      const colorClass = r.hitRate >= 70 ? 'score-high' : r.hitRate <= 30 ? 'score-low' : 'score-mid';
+      const pick = isOver ? "OVER" : "UNDER";
+      
+      // Mini Log Visualization
+      const logViz = r.logs.slice(0,5).map(v => 
+        `<span class="${v > r.line ? 'hit' : 'miss'}">${v}</span>`
+      ).join(" ");
+
       tbody.innerHTML += `
         <tr>
-          <td>${g.date}</td>
-          <td>${g.opp}</td>
-          <td>${val}</td>
-          <td class="${isHit ? 'hit' : 'miss'}">${isHit ? 'OVER' : 'UNDER'}</td>
+          <td>
+            <div style="font-weight:700">${r.name}</div>
+            <div style="font-size:10px; color:var(--muted)">${r.league.toUpperCase()}</div>
+          </td>
+          <td>${r.stat}</td>
+          <td>${r.line}</td>
+          <td class="${colorClass}">${r.hitRate.toFixed(0)}%</td>
+          <td>
+            <div style="font-weight:bold; color:${isOver?'var(--success)':'var(--danger)'}">
+              ${pick} (${r.conf.toFixed(0)}%)
+            </div>
+            <div class="log-row">L5: ${logViz}</div>
+          </td>
+          <td>${r.avg.toFixed(1)}</td>
         </tr>
       `;
     });
-
-    // Render Meter (Z-Score Probability)
-    const sd = Math.sqrt(vals.reduce((t, v) => t + Math.pow(v - m, 2), 0) / (vals.length - 1)) || 1;
-    const z = (m - line) / sd;
-    
-    // Convert Z to probability (approx)
-    // z=0 -> 50%, z=1 -> 84%, z=-1 -> 16%
-    let prob = 0.5 * (1 + Math.erf(z / Math.sqrt(2))); 
-    prob = Math.max(0.01, Math.min(0.99, prob)); // Clamp
-
-    const pct = (prob * 100).toFixed(1);
-    const fill = document.getElementById('meterFill');
-    const title = document.getElementById('edgeTitle');
-    
-    fill.style.width = `${pct}%`;
-    document.getElementById('edgeProb').textContent = `${pct}%`;
-    
-    if(pct > 60) {
-      fill.style.background = 'var(--success)';
-      title.textContent = "Edge: LEAN OVER";
-      title.style.color = 'var(--success)';
-    } else if(pct < 40) {
-      fill.style.background = 'var(--danger)';
-      title.textContent = "Edge: LEAN UNDER";
-      title.style.color = 'var(--danger)';
-    } else {
-      fill.style.background = 'var(--warning)';
-      title.textContent = "Edge: NEUTRAL";
-      title.style.color = 'var(--warning)';
-    }
   }
 };
 
-// Math helper for Error Function (for Bell Curve)
+// Math Polyfill
 Math.erf = function(x) {
   var m = 1.0, s = 1.0, sum = x * 1.0;
   for(var i = 1; i < 50; i++){
-    m *= i;
-    s *= -1;
-    sum += (s * Math.pow(x, 2 * i + 1)) / (m * (2 * i + 1));
+    m *= i; s *= -1; sum += (s * Math.pow(x, 2 * i + 1)) / (m * (2 * i + 1));
   }
   return 2 * sum / Math.sqrt(Math.PI);
 };
-
 </script>
 </body>
 </html>
