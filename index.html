@@ -3,431 +3,475 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PROPLINE • Stealth Parlay Builder (NBA/NHL/NFL)</title>
+<title>PROPLINE • MASTER TERMINAL</title>
 <style>
-  :root{--bg:#0b0d10;--fg:#e7edf2;--mut:#9fb2c7;--card:#0f1318;--bor:#1b1f24;--ok:#6ef3a1;--warn:#ffd77a}
-  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif}
-  header{padding:14px 16px;border-bottom:1px solid var(--bor)}
-  main{max-width:1000px;margin:0 auto;padding:16px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .card{border:1px solid var(--bor);border-radius:12px;background:linear-gradient(180deg,#0f1318,#0b0d10);padding:12px;margin:10px 0}
-  input,button{background:var(--card);color:var(--fg);border:1px solid var(--bor);border-radius:10px;padding:10px}
-  button{cursor:pointer}
-  .mut{color:var(--mut);font-size:12px}
-  .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-  .grid{display:grid;grid-template-columns:1fr;gap:10px}
-  @media(min-width:860px){.grid{grid-template-columns:1fr 1fr}}
-  .pill{border:1px solid var(--bor);border-radius:999px;padding:2px 8px;margin-left:6px}
-  .hide{display:none}
+  :root {
+    --bg: #09090b;
+    --card: #18181b;
+    --border: #27272a;
+    --text: #e4e4e7;
+    --muted: #a1a1aa;
+    --accent: #3b82f6; /* Blue */
+    --success: #22c55e; /* Green */
+    --danger: #ef4444; /* Red */
+    --warning: #eab308; /* Yellow */
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-y: scroll;
+  }
+
+  /* Header */
+  header {
+    background: rgba(9, 9, 11, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .brand { font-weight: 700; letter-spacing: -0.5px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  .badge { background: var(--accent); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+  .badge.live { background: var(--danger); animation: pulse 2s infinite; }
+
+  /* Layout */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 24px;
+    flex: 1;
+  }
+
+  /* Components */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 4px; }
+  .w-full { width: 100%; }
+
+  /* Inputs */
+  input, select, button {
+    background: #27272a;
+    border: 1px solid #3f3f46;
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); ring: 2px solid var(--accent); }
+  
+  button { font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  button:hover { background: #3f3f46; }
+  button.primary { background: var(--text); color: var(--bg); border: 1px solid var(--text); }
+  button.primary:hover { opacity: 0.9; }
+
+  /* Search Bar Specifics */
+  .search-group { position: relative; flex: 1; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  #playerSearch { padding-left: 36px; width: 100%; }
+
+  /* Stats Grid */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
+  .stat-box { background: #00000040; border: 1px solid var(--border); padding: 12px; border-radius: 8px; text-align: center; }
+  .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 700; color: var(--text); }
+
+  /* Edge Meter */
+  .edge-container { margin-top: 16px; padding: 16px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; }
+  .meter-track { height: 8px; background: #27272a; border-radius: 100px; margin: 12px 0; position: relative; overflow: hidden; }
+  .meter-fill { height: 100%; background: var(--accent); width: 50%; transition: width 0.5s ease; }
+  .meter-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+  /* Logs Table */
+  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  .log-table th { text-align: left; padding: 8px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+  .log-table td { padding: 8px; border-bottom: 1px solid #27272a; }
+  .log-table tr:last-child td { border-bottom: none; }
+  .hit { color: var(--success); font-weight: 600; }
+  .miss { color: var(--danger); }
+
+  /* Utilities */
+  .hidden { display: none !important; }
+  .spin { animation: spin 1s linear infinite; }
+  
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
+
 <header>
-  <strong>PROPLINE • Stealth Parlay Builder</strong>
-  <span class="mut" style="margin-left:8px">Advisory only — no guarantees</span>
+  <div class="brand">
+    <span>PROPLINE</span>
+    <span class="badge live">LIVE CONNECT</span>
+  </div>
+  <div style="font-size: 12px; color: var(--muted);">v3.1 Master</div>
 </header>
 
 <main>
-  <!-- Stealth UI: just a command bar + outputs -->
   <div class="card">
     <div class="row">
-      <input id="cmd" placeholder='Try: "nba parlay 3 legs safe" • "nhl props popular" • "nfl parlay 2 legs medium" • add "vs BOS" to hint matchup' style="flex:1;min-width:280px" />
-      <button onclick="runCommand()">Go</button>
+      <div class="search-group">
+        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input id="playerSearch" placeholder="Search Player (e.g. LeBron, McDavid, Mahomes)..." onkeydown="if(event.key==='Enter') app.search()">
+      </div>
+      <button class="primary" onclick="app.search()" id="searchBtn">
+        <span>Analyze</span>
+      </button>
     </div>
-    <div class="mut" style="margin-top:6px">
-      Risk presets target hit rates: safe≈62%, medium≈57%, spicy≈52% (model-based; no sportsbook odds).
-    </div>
+    <div id="status" style="margin-top: 8px; font-size: 12px; color: var(--muted); min-height: 18px;">Ready. Enter player name.</div>
   </div>
 
-  <div id="nflZone" class="card hide">
-    <div class="mut">NFL helper: paste recent game numbers for each player (comma separated), plus the book line you want to evaluate.</div>
-    <div id="nflInputs" class="grid" style="margin-top:8px"></div>
-    <button onclick="addNFLSlot()">+ Add NFL player</button>
-    <div class="mut" style="margin-top:6px">Optional weather (open-air only): type “weather SEA” in the command after adding players.</div>
-  </div>
+  <div id="dashboard" class="hidden">
+    
+    <div class="card">
+      <div class="row" style="justify-content: space-between;">
+        <div class="col">
+          <h2 id="pName" style="margin: 0; font-size: 24px;">Player Name</h2>
+          <span id="pTeam" style="color: var(--muted); font-size: 14px;">Team • League</span>
+        </div>
+        <div class="col" style="align-items: flex-end;">
+          <div class="row">
+            <span style="font-size: 12px; color: var(--muted);">Target Line:</span>
+            <input type="number" id="targetLine" value="19.5" style="width: 80px;" onchange="app.recalc()">
+          </div>
+          <select id="statType" style="margin-top: 8px; width: 140px;" onchange="app.recalc()">
+            </select>
+        </div>
+      </div>
 
-  <div class="card">
-    <h3 id="title">Ready</h3>
-    <div id="explain" class="mut">Type a command to build a slip. No scores shown; props are modelled from recent form & context.</div>
-    <pre id="out" class="mono" style="white-space:pre-wrap">—</pre>
-    <div class="row">
-      <button onclick="copyOut()">Copy</button>
-      <span id="copied" class="mut"></span>
+      <div class="edge-container">
+        <div class="row" style="justify-content: space-between; margin-bottom: 4px;">
+          <strong id="edgeTitle" style="font-size: 14px;">Calculating Edge...</strong>
+          <span id="edgeProb" class="badge">0%</span>
+        </div>
+        <div class="meter-track">
+          <div id="meterFill" class="meter-fill" style="width: 50%;"></div>
+        </div>
+        <div class="meter-labels">
+          <span>Heavy Under</span>
+          <span>Neutral</span>
+          <span>Heavy Over</span>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">Hit Rate (L10)</div>
+          <div class="stat-val" id="valHitRate">-%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Average</div>
+          <div class="stat-val" id="valAvg">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Last Game</div>
+          <div class="stat-val" id="valLast">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Trend (L3)</div>
+          <div class="stat-val" id="valTrend">-</div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h3>Popular props (model angles)</h3>
-    <div id="popular" class="grid"></div>
+    <div class="card">
+      <h3 style="margin: 0 0 12px 0; font-size: 16px;">Game Log (Last 10)</h3>
+      <div style="overflow-x: auto;">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Opponent</th>
+              <th>Stat</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </main>
 
 <script>
-/* =================== ACCESS (stealth prompt) =================== */
-(function gate(){
-  const ACCESS_CODE = "64786";
-  const tryCode = prompt("Enter access code");
-  if (tryCode !== ACCESS_CODE) {
-    document.body.innerHTML = "<div style='padding:24px;font-family:system-ui;color:#e7edf2;background:#0b0d10'>Access denied.</div>";
-  }
-})();
+/**
+ * PROPLINE MASTER SCRIPT
+ * Handles Proxy Fetching, HTML Parsing, and Math
+ */
 
-/* =================== CONFIG / FREE PROXY ===================
+const app = {
+  // Config
+  proxy: "https://api.allorigins.win/get?url=",
+  currentLogs: [],
+  currentLeague: "",
+  
+  // UI Helpers
+  log: (msg, isErr) => {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.style.color = isErr ? 'var(--danger)' : 'var(--muted)';
+  },
+  
+  loading: (isLoading) => {
+    const btn = document.getElementById('searchBtn');
+    if(isLoading) {
+      btn.innerHTML = `<svg class="spin" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg> Fetching...`;
+      document.getElementById('dashboard').classList.add('hidden');
+    } else {
+      btn.innerHTML = `<span>Analyze</span>`;
+    }
+  },
 
-  Some endpoints already support CORS (balldontlie, NHL, weather.gov).
-  A free proxy wrapper is included for *optional* use:
-    - Set USE_PROXY = true to route fetches via AllOrigins for extra CORS leniency.
-  Note: free proxies are public and unreliable; use for low-volume, non-sensitive data only.
-*/
-const USE_PROXY = false; // set true if you want to proxy eligible GETs (JSON)
-function prox(url){
-  if (!USE_PROXY) return url;
-  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-}
+  // 1. Search Logic
+  search: async () => {
+    const query = document.getElementById('playerSearch').value.trim();
+    if(!query) return;
 
-/* =================== HELPERS & MATH =================== */
-const mean = a => a.reduce((x,y)=>x+y,0)/Math.max(1,a.length);
-const sd   = a => { const m=mean(a); return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/Math.max(1,a.length-1))||0; };
-function pickZ(risk){ return risk==="safe"?0.305 : risk==="medium"?0.180 : 0.050; } // ~62/57/52
-function roundHalf(x){ return Math.floor(x)+0.5; }
-function expWeights(n, lambda=0.18){ return Array.from({length:n},(_,i)=>Math.exp(-lambda*i)); } // i=0 newest
-function wmean(vals){
-  const w = expWeights(vals.length);
-  const num = vals.reduce((acc,v,i)=> acc + v*w[i], 0), den = w.reduce((a,b)=>a+b,0);
-  return den? num/den : mean(vals);
-}
-function mcProbOver(mu, sdv, line, n=25000){
-  if (!Number.isFinite(sdv) || sdv<=0) return {pOver: mu>line?1:0, pUnder: mu>line?0:1};
-  let over=0, under=0;
-  for(let i=0;i<n;i++){
-    const u1=Math.random(), u2=Math.random();
-    const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
-    const x = mu + sdv*z;
-    if (x>line) over++; else under++;
-  }
-  return { pOver:over/n, pUnder:under/n };
-}
+    app.loading(true);
+    app.log("Searching player database...");
 
-/* =================== STAR SHORTLISTS =================== */
-const NBA_STARS = ["LeBron James","Anthony Davis","Stephen Curry","Luka Doncic","Jayson Tatum","Giannis Antetokounmpo","Shai Gilgeous-Alexander","Devin Booker","Nikola Jokic","Kyrie Irving","Kevin Durant","Donovan Mitchell","Damian Lillard","Jaylen Brown","Trae Young"];
-const NHL_STARS = ["Connor McDavid","Nathan MacKinnon","Auston Matthews","Nikita Kucherov","David Pastrnak","Leon Draisaitl","Kirill Kaprizov","Mikko Rantanen","Sidney Crosby","Jack Eichel","Artemi Panarin","Matthew Tkachuk"];
+    try {
+      // Step A: Find Player ID & League
+      const searchUrl = `https://site.web.api.espn.com/apis/common/v3/search?region=us&lang=en&short=true&limit=5&type=player&query=${encodeURIComponent(query)}`;
+      const res = await fetch(app.proxy + encodeURIComponent(searchUrl));
+      const json = await res.json();
+      
+      if(!json.contents) throw new Error("Proxy connection failed.");
+      const data = JSON.parse(json.contents);
+      const item = data.items?.[0]; // Take top result
+      
+      if(!item) throw new Error("Player not found.");
+      
+      // Parse League from URL (e.g. sport/football/nfl/...)
+      let league = "nba"; // Default fallback
+      if(item.url.includes("nfl")) league = "nfl";
+      else if(item.url.includes("nhl")) league = "nhl";
+      else if(item.url.includes("nba")) league = "nba";
+      
+      // Parse ID
+      const idMatch = item.url.match(/\/id\/(\d+)\//);
+      if(!idMatch) throw new Error("Could not parse player ID.");
+      const id = idMatch[1];
 
-/* =================== PARSING COMMANDS =================== */
-function parseCommand(s){
-  s = (s||"").toLowerCase();
-  const league = /nba/.test(s)?"nba":/nhl/.test(s)?"nhl":/nfl/.test(s)?"nfl":"nba";
-  const legsMatch = s.match(/(\d+)\s*legs/);
-  const legs = legsMatch ? Math.max(1, Math.min(6, Number(legsMatch[1]))) : 2;
-  const risk = /spicy/.test(s)?"spicy" : /medium/.test(s)?"medium" : "safe";
-  const mode = /props/.test(s) ? "props" : "parlay";
-  const oppHint = (s.match(/vs\s+([A-Za-z]{2,4})/)||[])[1] || ""; // e.g., "vs BOS"
-  const askWeather = /weather\s+([A-Za-z]{2,4})/.test(s) ? (s.match(/weather\s+([A-Za-z]{2,4})/)[1]) : "";
-  return { league, legs, risk, mode, oppHint, askWeather };
-}
+      app.currentLeague = league;
+      document.getElementById('pName').textContent = item.displayName;
+      document.getElementById('pTeam').textContent = `${item.subtitle || ""} • ${league.toUpperCase()}`;
 
-/* =================== DATA: NBA (balldontlie) =================== */
-async function nbaSearch(name){
-  const r = await fetch(prox(`https://www.balldontlie.io/api/v1/players?search=${encodeURIComponent(name)}&per_page=1`));
-  if(!r.ok) throw new Error("NBA player search failed");
-  const j = await r.json(); const p=(j.data||[])[0];
-  if(!p) throw new Error("NBA player not found");
-  return p; // {id, first_name, last_name, team:{abbreviation,...}}
-}
-async function nbaRecent(name, statKey="pts", takeN=12){
-  const p = await nbaSearch(name);
-  const r = await fetch(prox(`https://www.balldontlie.io/api/v1/stats?player_ids[]=${p.id}&per_page=100`));
-  if(!r.ok) throw new Error("NBA stats fetch failed");
-  const j = await r.json();
-  const rows = (j.data||[]).sort((a,b)=> new Date(b.game.date)-new Date(a.game.date)).slice(0,takeN);
-  const vals = rows.map(x => Number(x[statKey]||0));
-  const dates= rows.map(x => x.game?.date ? new Date(x.game.date) : null);
-  const teamId = (rows[0]?.team?.id) || p.team?.id;
-  return { label: name, teamId, vals, dates };
-}
+      // Step B: Fetch Logs
+      app.log(`Fetching ${league.toUpperCase()} game logs...`);
+      const logs = await app.fetchLogs(id, league);
+      
+      if(!logs.length) throw new Error("No recent logs found (Season might be over).");
+      
+      app.currentLogs = logs;
+      app.initStatsDropdown(league, logs[0].stats);
+      document.getElementById('dashboard').classList.remove('hidden');
+      app.recalc();
+      app.log("Data loaded successfully.");
+      
+    } catch(e) {
+      app.log(e.message, true);
+      console.error(e);
+    } finally {
+      app.loading(false);
+    }
+  },
 
-/* =================== DATA: NHL (NHL API) =================== */
-async function nhlFindId(name){
-  const r = await fetch(prox(`https://suggest.svc.nhl.com/svc/suggest/v1/minplayers/${encodeURIComponent(name)}/1`));
-  if(!r.ok) throw new Error("NHL suggest failed");
-  const j = await r.json(); const s = (j.suggestions||[])[0];
-  if(!s) throw new Error("NHL player not found");
-  return s.split("|")[0];
-}
-function nhlSeason(){
-  const d=new Date(), y=d.getFullYear(), m=d.getMonth()+1; const start=(m>=10?y:y-1), end=start+1; return `${start}${end}`;
-}
-async function nhlRecent(name, statType="sog", takeN=12){
-  const id = await nhlFindId(name);
-  const r = await fetch(prox(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=gameLog&season=${nhlSeason()}`));
-  if(!r.ok) throw new Error("NHL logs failed");
-  const j = await r.json(); const logs = (((j.stats||[])[0]||{}).splits||[]).slice(-takeN).reverse();
-  const vals = logs.map(s=>{
-    const st=s.stat||{};
-    if (statType==="sog") return Number(st.shots||0);
-    if (statType==="points") return Number((st.goals||0)+(st.assists||0));
-    if (statType==="goals") return Number(st.goals||0);
-    if (statType==="assists") return Number(st.assists||0);
-    return 0;
-  });
-  const dates = logs.map(s=> s.date ? new Date(s.date) : null);
-  return { label: name, vals, dates };
-}
+  // 2. The "Pro" Scraper (Smart Column Detection)
+  fetchLogs: async (id, league) => {
+    const url = `https://www.espn.com/${league}/player/gamelog/_/id/${id}`;
+    const res = await fetch(app.proxy + encodeURIComponent(url));
+    const json = await res.json();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(json.contents, "text/html");
 
-/* =================== NFL (manual numbers) + Weather =================== */
-const NFL_STADIUMS = [
-  ["SEA",47.5952,-122.3316,"open"],["BUF",42.7738,-78.7868,"open"],["KC",39.0490,-94.4839,"open"],
-  ["CHI",41.8623,-87.6167,"open"],["DAL",32.7473,-97.0945,"dome"],["MIN",44.9736,-93.2576,"dome"],
-  ["MIA",25.9580,-80.2389,"open"],["GB",44.5013,-88.0622,"open"],["NYG",40.8122,-74.0748,"open"],
-  ["SF",37.4030,-121.9700,"open"],["PHI",39.9008,-75.1675,"open"],["CLE",41.5057,-81.6996,"open"]
-];
-async function nflWeather(abbr){
-  const row = NFL_STADIUMS.find(s=>s[0]===abbr.toUpperCase());
-  if(!row) return "Unknown stadium/roof.";
-  const [_,lat,lon,roof] = row;
-  if (roof==="dome") return "Dome/closed roof — minimal weather impact.";
-  try{
-    const p = await fetch(prox(`https://api.weather.gov/points/${lat},${lon}`));
-    if(!p.ok) return "Weather points failed.";
-    const pj = await p.json(); const hourly = pj?.properties?.forecastHourly;
-    if(!hourly) return "No hourly forecast found.";
-    const r = await fetch(prox(hourly)); if(!r.ok) return "Forecast fetch failed.";
-    const j = await r.json(); const h = (j.properties?.periods||[])[0];
-    return `Weather: ${h?.shortForecast||"—"}, temp ${h?.temperature??"?"}°${h?.temperatureUnit||""}, wind ${h?.windSpeed||"—"} ${h?.windDirection||""}`;
-  }catch(_e){ return "Weather error."; }
-}
-
-/* =================== CONTEXT & HEURISTICS ===================
-
-   We blend:
-   - Recency-weighted mean (last ~12)
-   - Clutch streak: last 3 above overall mean -> +3% mean
-   - Back-to-back fatigue (if last game ≤ 1 day ago) -> −5% mean
-   - Small-sample variance inflation (n < 10) -> sd * 1.15
-   - Rookie-ish (very small N) -> sd * 1.25
-   - Opponent hint (“vs XXX”) bumps line by +2% if recent H2H success
-*/
-function adjustContext(vals, dates, risk, oppHeadToHeadHit=null, b2b=false){
-  let mu = wmean(vals);
-  let s  = sd(vals);
-  // clutch (last 3 > mean)
-  const last3 = vals.slice(0,3);
-  const hardClutch = last3.filter(v => v > mu).length >= 2;
-  if (hardClutch) mu *= 1.03;
-
-  // back-to-back
-  if (b2b) mu *= 0.95;
-
-  // small sample variance bumps
-  if (vals.length < 10) s *= 1.15;
-  if (vals.length < 7)  s *= 1.25;
-
-  // opponent head-to-head bump
-  if (oppHeadToHeadHit !== null) {
-    if (oppHeadToHeadHit >= 0.6) mu *= 1.02;      // good history vs opp
-    else if (oppHeadToHeadHit <= 0.4) mu *= 0.98; // bad history vs opp
-  }
-
-  // suggested conservative OVER line from model (independent of books)
-  const z = pickZ(risk);
-  const modelLine = Math.max(0, roundHalf(mu - z*s));
-  return { mu, s, modelLine };
-}
-
-/* =================== ENGINE =================== */
-function buildLeg(player, stat, line, pOver, pUnder){
-  const pick = pOver>=0.57 ? `OVER ${line}` : (pUnder>=0.57 ? `UNDER ${line}` : (pOver>pUnder?`LEAN OVER ${line}`:`LEAN UNDER ${line}`));
-  const conf = Math.max(pOver,pUnder);
-  return {
-    player, stat, line, pick,
-    estHitPct: Math.round(conf*100),
-    pOver: +(pOver*100).toFixed(1), pUnder: +(pUnder*100).toFixed(1)
-  };
-}
-
-async function nbaMakeParlay(legs, risk, statKey="pts", oppHint=""){
-  const stars = NBA_STARS.slice(0,12);
-  const picks = [];
-  for (const name of stars){
-    try{
-      const rec = await nbaRecent(name, statKey, 12);
-      if (!rec.vals.length) continue;
-      // crude b2b: if most recent game within last 30 hours
-      const last = rec.dates?.[0]; const b2b = last ? (Date.now() - last.getTime() < 30*3600*1000) : false;
-      // optional H2H hint: if provided and player had above-mean in ≥60% of last 5 vs hinted opp (best-effort by name match)
-      let h2h = null;
-      if (oppHint){
-        // We don't have a reliable opponent map here; treat hint as a soft bias only.
-        h2h = 0.5; // neutral; (kept for API parity)
-      }
-      const ctx = adjustContext(rec.vals, rec.dates, risk, h2h, b2b);
-      const {pOver,pUnder} = mcProbOver(ctx.mu, ctx.s, ctx.modelLine, 20000);
-      const statLabel = "NBA " + (statKey==="pts"?"Points":statKey==="ast"?"Assists":statKey==="reb"?"Rebounds":"3PM");
-      picks.push({ ...buildLeg(rec.label, statLabel, ctx.modelLine, pOver, pUnder), vals: rec.vals });
-    }catch(_e){}
-  }
-  picks.sort((a,b)=> b.estHitPct - a.estHitPct);
-  return picks.slice(0, legs);
-}
-
-async function nhlMakeParlay(legs, risk, stat="sog"){
-  const stars = NHL_STARS.slice(0,12);
-  const picks = [];
-  for (const name of stars){
-    try{
-      const rec = await nhlRecent(name, stat, 12);
-      if (!rec.vals.length) continue;
-      const last = rec.dates?.[0]; const b2b = last ? (Date.now() - last.getTime() < 30*3600*1000) : false;
-      const ctx = adjustContext(rec.vals, rec.dates, risk, null, b2b);
-      const {pOver,pUnder} = mcProbOver(ctx.mu, ctx.s, ctx.modelLine, 20000);
-      const statLabel = "NHL " + (stat==="sog"?"Shots on Goal":stat==="goals"?"Goals":stat==="assists"?"Assists":"Points");
-      picks.push({ ...buildLeg(rec.label, statLabel, ctx.modelLine, pOver, pUnder), vals: rec.vals });
-    }catch(_e){}
-  }
-  picks.sort((a,b)=> b.estHitPct - a.estHitPct);
-  return picks.slice(0, legs);
-}
-
-function nflParseManual(name, raw){
-  const vals = (raw||"").split(/[\s,]+/).map(Number).filter(v=>Number.isFinite(v));
-  if (!vals.length) throw new Error("Provide recent NFL numbers");
-  return { label: name||"NFL Player", vals };
-}
-
-async function nflMakeParlay(legs, risk){
-  const cards = Array.from(document.querySelectorAll('#nflInputs .card'));
-  const picks = [];
-  for (const c of cards){
-    const name = c.querySelector('input[id^="nflName_"]').value.trim();
-    const raw  = c.querySelector('input[id^="nflVals_"]').value.trim();
-    const line = Number(c.querySelector('input[id^="nflLine_"]').value||NaN);
-    const stat = c.querySelector('select[id^="nflStat_"]').value;
-    if (!name || !raw || !Number.isFinite(line)) continue;
-    try{
-      const rec = nflParseManual(name, raw);
-      const mu = wmean(rec.vals);
-      let s  = sd(rec.vals);
-      if (rec.vals.length<10) s*=1.15; if(rec.vals.length<7) s*=1.25;
-      const {pOver,pUnder} = mcProbOver(mu, s, line, 25000);
-      picks.push({ ...buildLeg(rec.label, "NFL ("+stat+")", line, pOver, pUnder), vals: rec.vals });
-    }catch(_e){}
-  }
-  picks.sort((a,b)=> b.estHitPct - a.estHitPct);
-  return picks.slice(0, legs);
-}
-
-/* =================== UI RENDER =================== */
-function setTitle(t){ document.getElementById('title').textContent = t; }
-function setExplain(t){ document.getElementById('explain').textContent = t; }
-function showOut(o){ document.getElementById('out').textContent = o; }
-function copyOut(){ const t=document.getElementById('out').textContent||""; navigator.clipboard.writeText(t).then(()=>{ document.getElementById('copied').textContent="Copied!"; setTimeout(()=>document.getElementById('copied').textContent="",1200); }); }
-function renderPopular(picks){
-  const box = document.getElementById('popular'); box.innerHTML="";
-  if (!picks.length){ box.innerHTML = `<div class="mut">No popular props yet.</div>`; return; }
-  picks.forEach(p=>{
-    const d=document.createElement('div'); d.className='card';
-    d.innerHTML = `<b>${p.player}</b> <span class="pill mut">${p.stat}</span>
-      <div class="mut">Suggested pick: ${p.pick} • est hit ~${p.estHitPct}%</div>
-      <div class="mut">Recent: [ ${p.vals.join(", ")} ]</div>
-      <div class="row" style="margin-top:6px">
-        <input placeholder="Paste book line (e.g., 24.5)" style="width:140px" />
-        <button>Re-Sim</button>
-        <span class="mut"></span>
-      </div>`;
-    const input = d.querySelector("input");
-    const btn   = d.querySelector("button");
-    const note  = d.querySelector("span.mut:last-child");
-    btn.onclick = ()=>{
-      const line = Number((input.value||"").trim());
-      if (!Number.isFinite(line)){ note.textContent="Enter a number"; return; }
-      const m=mean(p.vals), s=sd(p.vals);
-      const {pOver,pUnder} = mcProbOver(m, s, line, 20000);
-      note.textContent = `P(Over)=${(pOver*100).toFixed(1)}% • P(Under)=${(pUnder*100).toFixed(1)}%`;
+    // Helper: Find index of a header text
+    const getIdx = (row, txts) => {
+      const cells = Array.from(row.querySelectorAll('th, td'));
+      return cells.findIndex(c => txts.some(t => c.textContent.toUpperCase().includes(t)));
     };
-    box.appendChild(d);
-  });
-}
 
-/* =================== NFL input slots =================== */
-function addNFLSlot(){
-  const wrap = document.getElementById('nflInputs');
-  const id = Math.random().toString(16).slice(2,7);
-  const div = document.createElement('div');
-  div.className='card';
-  div.innerHTML = `
-    <div class="row">
-      <input id="nflName_${id}" placeholder="NFL player (e.g., Amon-Ra St. Brown)" style="flex:1;min-width:240px">
-      <select id="nflStat_${id}">
-        <option value="rec_yds">Receiving Yards</option>
-        <option value="receptions">Receptions</option>
-        <option value="rush_yds">Rushing Yards</option>
-        <option value="rush_att">Rush Attempts</option>
-        <option value="pass_yds">Passing Yards</option>
-      </select>
-      <input id="nflVals_${id}" placeholder="Recent numbers (e.g., 78,64,93,55,81,102,67,71,88,60)" style="flex:1;min-width:260px">
-      <input id="nflLine_${id}" placeholder="Line (e.g., 72.5)" style="width:120px">
-    </div>`;
-  wrap.appendChild(div);
-}
+    const logs = [];
+    const rows = Array.from(doc.querySelectorAll('.Table__TBODY tr'));
+    // Attempt to find the header row (thead) to map columns
+    const headerRow = doc.querySelector('.Table__THEAD tr');
 
-/* =================== COMMAND EXECUTION =================== */
-async function runCommand(){
-  const { league, legs, risk, mode, oppHint, askWeather } = parseCommand(document.getElementById('cmd').value);
-  setTitle(`${league.toUpperCase()} • ${mode==="parlay" ? `${legs}-Leg Parlay` : "Popular Props"} • ${risk.toUpperCase()}`);
-  setExplain(mode==="parlay"
-    ? "Building a slip from recent form with matchup & game-factor heuristics (no sportsbook odds)."
-    : "Scanning selected stars’ recent form for strong model-based angles.");
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if(cells.length < 5) return;
+      const dateTxt = cells[0].textContent;
+      if(!dateTxt.match(/^[A-Za-z]{3}\s\d+\/\d+/)) return; // Valid date check
 
-  document.getElementById('nflZone').classList.toggle('hide', league!=="nfl");
+      let stats = {};
+      
+      // Default Indices (Fallbacks)
+      let ptsIdx = -1, rebIdx = -1, astIdx = -1, sogIdx = -1, ydsIdx = -1, tdIdx = -1;
 
-  // Optional quick weather ping for NFL open-air stadiums (by city code)
-  if (league==="nfl" && askWeather){
-    const wx = await nflWeather(askWeather);
-    setExplain(`${document.getElementById('explain').textContent}  •  ${wx}`);
-  }
-
-  try{
-    let picks=[], popular=[];
-    if (league==="nba"){
-      const statPref = "pts";
-      if (mode==="parlay"){
-        picks = await nbaMakeParlay(legs, risk, statPref, oppHint);
+      // Smart Map via Header
+      if(headerRow) {
+        if(league === 'nba') {
+          ptsIdx = getIdx(headerRow, ['PTS']);
+          rebIdx = getIdx(headerRow, ['REB']);
+          astIdx = getIdx(headerRow, ['AST']);
+        } else if(league === 'nhl') {
+          sogIdx = getIdx(headerRow, ['SOG', 'SH']);
+          ptsIdx = getIdx(headerRow, ['PTS']);
+        } else if(league === 'nfl') {
+          // NFL tables vary (Passing vs Rushing). 
+          // We look for YDS generically. If multiple YDS, usually 1st is the primary category.
+          ydsIdx = getIdx(headerRow, ['YDS']); 
+          tdIdx = getIdx(headerRow, ['TD']);
+          // Rec count
+          const recIdx = getIdx(headerRow, ['REC']);
+          if(recIdx > -1) stats.receptions = Number(cells[recIdx].textContent);
+        }
       }
-      popular = await nbaMakeParlay(Math.min(8,legs+4), risk, statPref, oppHint);
-    } else if (league==="nhl"){
-      const statPref = "sog";
-      if (mode==="parlay"){
-        picks = await nhlMakeParlay(legs, risk, statPref);
+
+      // Extraction with Fallbacks
+      if(league === 'nba') {
+        stats.pts = Number(cells[ptsIdx > -1 ? ptsIdx : cells.length-1].textContent);
+        stats.reb = Number(cells[rebIdx > -1 ? rebIdx : cells.length-7].textContent);
+        stats.ast = Number(cells[astIdx > -1 ? astIdx : cells.length-6].textContent);
+        stats.pra = stats.pts + stats.reb + stats.ast;
+      } 
+      else if(league === 'nhl') {
+        stats.sog = Number(cells[sogIdx > -1 ? sogIdx : cells.length-3].textContent) || 0;
+        stats.pts = Number(cells[ptsIdx > -1 ? ptsIdx : 5].textContent);
       }
-      popular = await nhlMakeParlay(Math.min(8,legs+4), risk, statPref);
+      else if(league === 'nfl') {
+        stats.yards = Number(cells[ydsIdx > -1 ? ydsIdx : 3].textContent) || 0; // fallback to col 3
+        stats.td = Number(cells[tdIdx > -1 ? tdIdx : cells.length-2].textContent) || 0;
+      }
+
+      logs.push({ date: dateTxt, opp: cells[1].textContent, stats });
+    });
+
+    return logs.slice(0, 10); // Last 10
+  },
+
+  // 3. UI Logic
+  initStatsDropdown: (league, sampleStats) => {
+    const sel = document.getElementById('statType');
+    sel.innerHTML = "";
+    Object.keys(sampleStats).forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = k.toUpperCase();
+      sel.appendChild(opt);
+    });
+    // Defaults
+    if(league==='nba') sel.value = 'pts';
+    if(league==='nhl') sel.value = 'sog';
+    if(league==='nfl') sel.value = 'yards';
+  },
+
+  recalc: () => {
+    const key = document.getElementById('statType').value;
+    const line = parseFloat(document.getElementById('targetLine').value) || 0;
+    const vals = app.currentLogs.map(g => g.stats[key] || 0);
+    
+    // Stats
+    const m = vals.reduce((a,b)=>a+b,0) / vals.length;
+    const hits = vals.filter(v => v > line).length;
+    const hitRate = (hits / vals.length) * 100;
+    const last = vals[0];
+    const trend = vals.slice(0,3).reduce((a,b)=>a+b,0)/3;
+
+    // Render Grid
+    document.getElementById('valHitRate').textContent = `${hitRate.toFixed(0)}%`;
+    document.getElementById('valHitRate').style.color = hitRate >= 60 ? 'var(--success)' : hitRate <= 40 ? 'var(--danger)' : 'var(--text)';
+    
+    document.getElementById('valAvg').textContent = m.toFixed(1);
+    document.getElementById('valLast').textContent = last;
+    document.getElementById('valTrend').textContent = trend.toFixed(1);
+
+    // Render Table
+    const tbody = document.getElementById('logBody');
+    tbody.innerHTML = "";
+    app.currentLogs.forEach(g => {
+      const val = g.stats[key] || 0;
+      const isHit = val > line;
+      tbody.innerHTML += `
+        <tr>
+          <td>${g.date}</td>
+          <td>${g.opp}</td>
+          <td>${val}</td>
+          <td class="${isHit ? 'hit' : 'miss'}">${isHit ? 'OVER' : 'UNDER'}</td>
+        </tr>
+      `;
+    });
+
+    // Render Meter (Z-Score Probability)
+    const sd = Math.sqrt(vals.reduce((t, v) => t + Math.pow(v - m, 2), 0) / (vals.length - 1)) || 1;
+    const z = (m - line) / sd;
+    
+    // Convert Z to probability (approx)
+    // z=0 -> 50%, z=1 -> 84%, z=-1 -> 16%
+    let prob = 0.5 * (1 + Math.erf(z / Math.sqrt(2))); 
+    prob = Math.max(0.01, Math.min(0.99, prob)); // Clamp
+
+    const pct = (prob * 100).toFixed(1);
+    const fill = document.getElementById('meterFill');
+    const title = document.getElementById('edgeTitle');
+    
+    fill.style.width = `${pct}%`;
+    document.getElementById('edgeProb').textContent = `${pct}%`;
+    
+    if(pct > 60) {
+      fill.style.background = 'var(--success)';
+      title.textContent = "Edge: LEAN OVER";
+      title.style.color = 'var(--success)';
+    } else if(pct < 40) {
+      fill.style.background = 'var(--danger)';
+      title.textContent = "Edge: LEAN UNDER";
+      title.style.color = 'var(--danger)';
     } else {
-      // NFL: manual
-      if (mode==="parlay"){
-        picks = await nflMakeParlay(legs, risk);
-      }
-      popular = []; // manual-driven; nothing automatic to show here
+      fill.style.background = 'var(--warning)';
+      title.textContent = "Edge: NEUTRAL";
+      title.style.color = 'var(--warning)';
     }
-
-    // Render slip
-    const lines = [];
-    if (!picks.length){
-      lines.push("No legs qualified yet. Try medium/spicy risk or reduce legs.");
-    } else {
-      lines.push("Advisory slip (model-based; no book odds):");
-      picks.forEach((l,i)=>{
-        lines.push(`${i+1}. ${l.player} — ${l.stat} — ${l.pick}  (est hit ~${l.estHitPct}%, P(Over)=${l.pOver}%, P(Under)=${l.pUnder}%)`);
-      });
-    }
-    lines.push("\nModel factors used: recency-weighted form, clutch streak, back-to-back fatigue, small-sample variance, optional opponent hint.");
-    showOut(lines.join("\n"));
-
-    renderPopular(popular);
-  }catch(e){
-    showOut("Error: "+e.message);
   }
-}
+};
 
-/* =================== Boot: add a couple NFL slots so it's ready =================== */
-addNFLSlot(); addNFLSlot();
+// Math helper for Error Function (for Bell Curve)
+Math.erf = function(x) {
+  var m = 1.0, s = 1.0, sum = x * 1.0;
+  for(var i = 1; i < 50; i++){
+    m *= i;
+    s *= -1;
+    sum += (s * Math.pow(x, 2 * i + 1)) / (m * (2 * i + 1));
+  }
+  return 2 * sum / Math.sqrt(Math.PI);
+};
+
 </script>
 </body>
 </html>
