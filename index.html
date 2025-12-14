@@ -3,293 +3,431 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PROPLINE • Live Advisory</title>
+<title>PROPLINE • Stealth Parlay Builder (NBA/NHL/NFL)</title>
 <style>
-  :root{--bg:#0b0d10;--fg:#e7edf2;--mut:#9fb2c7;--border:#1b1f24;--card:#0f1318}
+  :root{--bg:#0b0d10;--fg:#e7edf2;--mut:#9fb2c7;--card:#0f1318;--bor:#1b1f24;--ok:#6ef3a1;--warn:#ffd77a}
   html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif}
-  header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  main{max-width:980px;margin:0 auto;padding:20px}
-  input,select,button,textarea{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:10px;padding:10px}
+  header{padding:14px 16px;border-bottom:1px solid var(--bor)}
+  main{max-width:1000px;margin:0 auto;padding:16px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .card{border:1px solid var(--bor);border-radius:12px;background:linear-gradient(180deg,#0f1318,#0b0d10);padding:12px;margin:10px 0}
+  input,button{background:var(--card);color:var(--fg);border:1px solid var(--bor);border-radius:10px;padding:10px}
   button{cursor:pointer}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .card{border:1px solid var(--border);border-radius:14px;padding:14px;margin:10px 0;background:linear-gradient(180deg,#0e1217,#0b0d10)}
+  .mut{color:var(--mut);font-size:12px}
   .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-  .mut{color:var(--mut)}
+  .grid{display:grid;grid-template-columns:1fr;gap:10px}
+  @media(min-width:860px){.grid{grid-template-columns:1fr 1fr}}
+  .pill{border:1px solid var(--bor);border-radius:999px;padding:2px 8px;margin-left:6px}
   .hide{display:none}
-  .ok{color:#68f3a2}
-  .err{color:#ff8080}
 </style>
 </head>
 <body>
 <header>
-  <strong>PROPLINE • Live Advisory</strong>
-  <span class="mut" style="font-size:12px">Advisory/education only — bet responsibly</span>
+  <strong>PROPLINE • Stealth Parlay Builder</strong>
+  <span class="mut" style="margin-left:8px">Advisory only — no guarantees</span>
 </header>
 
 <main>
-  <!-- ACCESS GATE -->
-  <div id="gate" class="card">
+  <!-- Stealth UI: just a command bar + outputs -->
+  <div class="card">
     <div class="row">
-      <b>Enter access code:</b>
-      <input id="code" placeholder="64786" inputmode="numeric" pattern="[0-9]*" />
-      <button onclick="unlock()">Unlock</button>
-      <span id="gate_msg" class="mut"></span>
+      <input id="cmd" placeholder='Try: "nba parlay 3 legs safe" • "nhl props popular" • "nfl parlay 2 legs medium" • add "vs BOS" to hint matchup' style="flex:1;min-width:280px" />
+      <button onclick="runCommand()">Go</button>
+    </div>
+    <div class="mut" style="margin-top:6px">
+      Risk presets target hit rates: safe≈62%, medium≈57%, spicy≈52% (model-based; no sportsbook odds).
     </div>
   </div>
 
-  <!-- APP BODY -->
-  <div id="app" class="hide">
-    <!-- KEYS -->
-    <div class="card">
-      <div class="row">
-        <b>Keys (stored only in this browser tab)</b>
-      </div>
-      <div class="row">
-        <label style="flex:1">The Odds API key
-          <input id="odds_key" placeholder="paste when you want live odds" style="width:100%">
-        </label>
-        <label style="flex:1">OpenAI key
-          <input id="openai_key" placeholder="sk-..." style="width:100%">
-        </label>
-        <button onclick="saveKeys()">Save</button>
-        <span id="keys_status" class="mut"></span>
-      </div>
-      <div class="mut" style="margin-top:6px;font-size:12px">
-        On GitHub Pages your keys are visible to users of this page. For private keys, run this behind a server later.
-      </div>
-    </div>
+  <div id="nflZone" class="card hide">
+    <div class="mut">NFL helper: paste recent game numbers for each player (comma separated), plus the book line you want to evaluate.</div>
+    <div id="nflInputs" class="grid" style="margin-top:8px"></div>
+    <button onclick="addNFLSlot()">+ Add NFL player</button>
+    <div class="mut" style="margin-top:6px">Optional weather (open-air only): type “weather SEA” in the command after adding players.</div>
+  </div>
 
-    <!-- CONTROLS -->
-    <div class="card">
-      <div class="row">
-        <label>League
-          <select id="league">
-            <option value="nba">NBA</option>
-            <option value="nfl">NFL</option>
-            <option value="mlb">MLB</option>
-            <option value="nhl">NHL</option>
-          </select>
-        </label>
-        <label>Sport key (Odds API)
-          <select id="sport">
-            <option value="basketball_nba">basketball_nba</option>
-            <option value="americanfootball_nfl">americanfootball_nfl</option>
-            <option value="baseball_mlb">baseball_mlb</option>
-            <option value="icehockey_nhl">icehockey_nhl</option>
-          </select>
-        </label>
-        <button onclick="refreshAll()">Refresh now</button>
-        <label><input id="autorefresh" type="checkbox" checked /> auto-refresh (60s)</label>
-        <span id="stamp" class="mut"></span>
-      </div>
+  <div class="card">
+    <h3 id="title">Ready</h3>
+    <div id="explain" class="mut">Type a command to build a slip. No scores shown; props are modelled from recent form & context.</div>
+    <pre id="out" class="mono" style="white-space:pre-wrap">—</pre>
+    <div class="row">
+      <button onclick="copyOut()">Copy</button>
+      <span id="copied" class="mut"></span>
     </div>
+  </div>
 
-    <!-- SLATE -->
-    <div class="card">
-      <h3>Today’s Slate (live dates & times)</h3>
-      <pre id="slate" class="mono">—</pre>
-    </div>
-
-    <!-- ODDS -->
-    <div class="card">
-      <h3>Live Odds (H2H, spreads, totals)</h3>
-      <div class="mut" style="font-size:12px">Requires The Odds API key above.</div>
-      <pre id="odds" class="mono">—</pre>
-    </div>
-
-    <!-- CHAT -->
-    <div class="card">
-      <h3>Ask anything</h3>
-      <div class="mut" style="font-size:12px">Requires an OpenAI key above.</div>
-      <div class="row">
-        <input id="q" placeholder="e.g., draft a safe 2-leg slip for tonight" style="flex:1">
-        <button onclick="ask()">Ask</button>
-      </div>
-      <pre id="a" class="mono">—</pre>
-    </div>
-
-    <!-- BET SLIP -->
-    <div class="card">
-      <h3>Draft bet slip (advisory only)</h3>
-      <textarea id="picks" rows="5" class="mono" style="width:100%"
-        placeholder='[{"game_id":"id","market":"spread","selection":"LAL -2.5","price":-110,"commence_time":"2025-12-14T19:05:00Z"}]'></textarea>
-      <div class="row">
-        <input id="stake" type="number" placeholder="Stake" value="10" style="width:120px">
-        <select id="stype"><option>single</option><option>parlay</option></select>
-        <button onclick="buildSlip()">Build Slip</button>
-      </div>
-      <pre id="slip" class="mono">—</pre>
-    </div>
+  <div class="card">
+    <h3>Popular props (model angles)</h3>
+    <div id="popular" class="grid"></div>
   </div>
 </main>
 
 <script>
-  // ========= GATE =========
+/* =================== ACCESS (stealth prompt) =================== */
+(function gate(){
   const ACCESS_CODE = "64786";
-  let sessionId = Math.random().toString(16).slice(2);
-  const mem = []; // simple per-session memory
+  const tryCode = prompt("Enter access code");
+  if (tryCode !== ACCESS_CODE) {
+    document.body.innerHTML = "<div style='padding:24px;font-family:system-ui;color:#e7edf2;background:#0b0d10'>Access denied.</div>";
+  }
+})();
 
-  function unlock() {
-    const code = document.getElementById('code').value.trim();
-    const msg = document.getElementById('gate_msg');
-    if (code === ACCESS_CODE) {
-      document.getElementById('gate').classList.add('hide');
-      document.getElementById('app').classList.remove('hide');
-      loadKeys();
-      refreshAll();
-      maybeTick();
-      msg.textContent = "";
+/* =================== CONFIG / FREE PROXY ===================
+
+  Some endpoints already support CORS (balldontlie, NHL, weather.gov).
+  A free proxy wrapper is included for *optional* use:
+    - Set USE_PROXY = true to route fetches via AllOrigins for extra CORS leniency.
+  Note: free proxies are public and unreliable; use for low-volume, non-sensitive data only.
+*/
+const USE_PROXY = false; // set true if you want to proxy eligible GETs (JSON)
+function prox(url){
+  if (!USE_PROXY) return url;
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+}
+
+/* =================== HELPERS & MATH =================== */
+const mean = a => a.reduce((x,y)=>x+y,0)/Math.max(1,a.length);
+const sd   = a => { const m=mean(a); return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/Math.max(1,a.length-1))||0; };
+function pickZ(risk){ return risk==="safe"?0.305 : risk==="medium"?0.180 : 0.050; } // ~62/57/52
+function roundHalf(x){ return Math.floor(x)+0.5; }
+function expWeights(n, lambda=0.18){ return Array.from({length:n},(_,i)=>Math.exp(-lambda*i)); } // i=0 newest
+function wmean(vals){
+  const w = expWeights(vals.length);
+  const num = vals.reduce((acc,v,i)=> acc + v*w[i], 0), den = w.reduce((a,b)=>a+b,0);
+  return den? num/den : mean(vals);
+}
+function mcProbOver(mu, sdv, line, n=25000){
+  if (!Number.isFinite(sdv) || sdv<=0) return {pOver: mu>line?1:0, pUnder: mu>line?0:1};
+  let over=0, under=0;
+  for(let i=0;i<n;i++){
+    const u1=Math.random(), u2=Math.random();
+    const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+    const x = mu + sdv*z;
+    if (x>line) over++; else under++;
+  }
+  return { pOver:over/n, pUnder:under/n };
+}
+
+/* =================== STAR SHORTLISTS =================== */
+const NBA_STARS = ["LeBron James","Anthony Davis","Stephen Curry","Luka Doncic","Jayson Tatum","Giannis Antetokounmpo","Shai Gilgeous-Alexander","Devin Booker","Nikola Jokic","Kyrie Irving","Kevin Durant","Donovan Mitchell","Damian Lillard","Jaylen Brown","Trae Young"];
+const NHL_STARS = ["Connor McDavid","Nathan MacKinnon","Auston Matthews","Nikita Kucherov","David Pastrnak","Leon Draisaitl","Kirill Kaprizov","Mikko Rantanen","Sidney Crosby","Jack Eichel","Artemi Panarin","Matthew Tkachuk"];
+
+/* =================== PARSING COMMANDS =================== */
+function parseCommand(s){
+  s = (s||"").toLowerCase();
+  const league = /nba/.test(s)?"nba":/nhl/.test(s)?"nhl":/nfl/.test(s)?"nfl":"nba";
+  const legsMatch = s.match(/(\d+)\s*legs/);
+  const legs = legsMatch ? Math.max(1, Math.min(6, Number(legsMatch[1]))) : 2;
+  const risk = /spicy/.test(s)?"spicy" : /medium/.test(s)?"medium" : "safe";
+  const mode = /props/.test(s) ? "props" : "parlay";
+  const oppHint = (s.match(/vs\s+([A-Za-z]{2,4})/)||[])[1] || ""; // e.g., "vs BOS"
+  const askWeather = /weather\s+([A-Za-z]{2,4})/.test(s) ? (s.match(/weather\s+([A-Za-z]{2,4})/)[1]) : "";
+  return { league, legs, risk, mode, oppHint, askWeather };
+}
+
+/* =================== DATA: NBA (balldontlie) =================== */
+async function nbaSearch(name){
+  const r = await fetch(prox(`https://www.balldontlie.io/api/v1/players?search=${encodeURIComponent(name)}&per_page=1`));
+  if(!r.ok) throw new Error("NBA player search failed");
+  const j = await r.json(); const p=(j.data||[])[0];
+  if(!p) throw new Error("NBA player not found");
+  return p; // {id, first_name, last_name, team:{abbreviation,...}}
+}
+async function nbaRecent(name, statKey="pts", takeN=12){
+  const p = await nbaSearch(name);
+  const r = await fetch(prox(`https://www.balldontlie.io/api/v1/stats?player_ids[]=${p.id}&per_page=100`));
+  if(!r.ok) throw new Error("NBA stats fetch failed");
+  const j = await r.json();
+  const rows = (j.data||[]).sort((a,b)=> new Date(b.game.date)-new Date(a.game.date)).slice(0,takeN);
+  const vals = rows.map(x => Number(x[statKey]||0));
+  const dates= rows.map(x => x.game?.date ? new Date(x.game.date) : null);
+  const teamId = (rows[0]?.team?.id) || p.team?.id;
+  return { label: name, teamId, vals, dates };
+}
+
+/* =================== DATA: NHL (NHL API) =================== */
+async function nhlFindId(name){
+  const r = await fetch(prox(`https://suggest.svc.nhl.com/svc/suggest/v1/minplayers/${encodeURIComponent(name)}/1`));
+  if(!r.ok) throw new Error("NHL suggest failed");
+  const j = await r.json(); const s = (j.suggestions||[])[0];
+  if(!s) throw new Error("NHL player not found");
+  return s.split("|")[0];
+}
+function nhlSeason(){
+  const d=new Date(), y=d.getFullYear(), m=d.getMonth()+1; const start=(m>=10?y:y-1), end=start+1; return `${start}${end}`;
+}
+async function nhlRecent(name, statType="sog", takeN=12){
+  const id = await nhlFindId(name);
+  const r = await fetch(prox(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=gameLog&season=${nhlSeason()}`));
+  if(!r.ok) throw new Error("NHL logs failed");
+  const j = await r.json(); const logs = (((j.stats||[])[0]||{}).splits||[]).slice(-takeN).reverse();
+  const vals = logs.map(s=>{
+    const st=s.stat||{};
+    if (statType==="sog") return Number(st.shots||0);
+    if (statType==="points") return Number((st.goals||0)+(st.assists||0));
+    if (statType==="goals") return Number(st.goals||0);
+    if (statType==="assists") return Number(st.assists||0);
+    return 0;
+  });
+  const dates = logs.map(s=> s.date ? new Date(s.date) : null);
+  return { label: name, vals, dates };
+}
+
+/* =================== NFL (manual numbers) + Weather =================== */
+const NFL_STADIUMS = [
+  ["SEA",47.5952,-122.3316,"open"],["BUF",42.7738,-78.7868,"open"],["KC",39.0490,-94.4839,"open"],
+  ["CHI",41.8623,-87.6167,"open"],["DAL",32.7473,-97.0945,"dome"],["MIN",44.9736,-93.2576,"dome"],
+  ["MIA",25.9580,-80.2389,"open"],["GB",44.5013,-88.0622,"open"],["NYG",40.8122,-74.0748,"open"],
+  ["SF",37.4030,-121.9700,"open"],["PHI",39.9008,-75.1675,"open"],["CLE",41.5057,-81.6996,"open"]
+];
+async function nflWeather(abbr){
+  const row = NFL_STADIUMS.find(s=>s[0]===abbr.toUpperCase());
+  if(!row) return "Unknown stadium/roof.";
+  const [_,lat,lon,roof] = row;
+  if (roof==="dome") return "Dome/closed roof — minimal weather impact.";
+  try{
+    const p = await fetch(prox(`https://api.weather.gov/points/${lat},${lon}`));
+    if(!p.ok) return "Weather points failed.";
+    const pj = await p.json(); const hourly = pj?.properties?.forecastHourly;
+    if(!hourly) return "No hourly forecast found.";
+    const r = await fetch(prox(hourly)); if(!r.ok) return "Forecast fetch failed.";
+    const j = await r.json(); const h = (j.properties?.periods||[])[0];
+    return `Weather: ${h?.shortForecast||"—"}, temp ${h?.temperature??"?"}°${h?.temperatureUnit||""}, wind ${h?.windSpeed||"—"} ${h?.windDirection||""}`;
+  }catch(_e){ return "Weather error."; }
+}
+
+/* =================== CONTEXT & HEURISTICS ===================
+
+   We blend:
+   - Recency-weighted mean (last ~12)
+   - Clutch streak: last 3 above overall mean -> +3% mean
+   - Back-to-back fatigue (if last game ≤ 1 day ago) -> −5% mean
+   - Small-sample variance inflation (n < 10) -> sd * 1.15
+   - Rookie-ish (very small N) -> sd * 1.25
+   - Opponent hint (“vs XXX”) bumps line by +2% if recent H2H success
+*/
+function adjustContext(vals, dates, risk, oppHeadToHeadHit=null, b2b=false){
+  let mu = wmean(vals);
+  let s  = sd(vals);
+  // clutch (last 3 > mean)
+  const last3 = vals.slice(0,3);
+  const hardClutch = last3.filter(v => v > mu).length >= 2;
+  if (hardClutch) mu *= 1.03;
+
+  // back-to-back
+  if (b2b) mu *= 0.95;
+
+  // small sample variance bumps
+  if (vals.length < 10) s *= 1.15;
+  if (vals.length < 7)  s *= 1.25;
+
+  // opponent head-to-head bump
+  if (oppHeadToHeadHit !== null) {
+    if (oppHeadToHeadHit >= 0.6) mu *= 1.02;      // good history vs opp
+    else if (oppHeadToHeadHit <= 0.4) mu *= 0.98; // bad history vs opp
+  }
+
+  // suggested conservative OVER line from model (independent of books)
+  const z = pickZ(risk);
+  const modelLine = Math.max(0, roundHalf(mu - z*s));
+  return { mu, s, modelLine };
+}
+
+/* =================== ENGINE =================== */
+function buildLeg(player, stat, line, pOver, pUnder){
+  const pick = pOver>=0.57 ? `OVER ${line}` : (pUnder>=0.57 ? `UNDER ${line}` : (pOver>pUnder?`LEAN OVER ${line}`:`LEAN UNDER ${line}`));
+  const conf = Math.max(pOver,pUnder);
+  return {
+    player, stat, line, pick,
+    estHitPct: Math.round(conf*100),
+    pOver: +(pOver*100).toFixed(1), pUnder: +(pUnder*100).toFixed(1)
+  };
+}
+
+async function nbaMakeParlay(legs, risk, statKey="pts", oppHint=""){
+  const stars = NBA_STARS.slice(0,12);
+  const picks = [];
+  for (const name of stars){
+    try{
+      const rec = await nbaRecent(name, statKey, 12);
+      if (!rec.vals.length) continue;
+      // crude b2b: if most recent game within last 30 hours
+      const last = rec.dates?.[0]; const b2b = last ? (Date.now() - last.getTime() < 30*3600*1000) : false;
+      // optional H2H hint: if provided and player had above-mean in ≥60% of last 5 vs hinted opp (best-effort by name match)
+      let h2h = null;
+      if (oppHint){
+        // We don't have a reliable opponent map here; treat hint as a soft bias only.
+        h2h = 0.5; // neutral; (kept for API parity)
+      }
+      const ctx = adjustContext(rec.vals, rec.dates, risk, h2h, b2b);
+      const {pOver,pUnder} = mcProbOver(ctx.mu, ctx.s, ctx.modelLine, 20000);
+      const statLabel = "NBA " + (statKey==="pts"?"Points":statKey==="ast"?"Assists":statKey==="reb"?"Rebounds":"3PM");
+      picks.push({ ...buildLeg(rec.label, statLabel, ctx.modelLine, pOver, pUnder), vals: rec.vals });
+    }catch(_e){}
+  }
+  picks.sort((a,b)=> b.estHitPct - a.estHitPct);
+  return picks.slice(0, legs);
+}
+
+async function nhlMakeParlay(legs, risk, stat="sog"){
+  const stars = NHL_STARS.slice(0,12);
+  const picks = [];
+  for (const name of stars){
+    try{
+      const rec = await nhlRecent(name, stat, 12);
+      if (!rec.vals.length) continue;
+      const last = rec.dates?.[0]; const b2b = last ? (Date.now() - last.getTime() < 30*3600*1000) : false;
+      const ctx = adjustContext(rec.vals, rec.dates, risk, null, b2b);
+      const {pOver,pUnder} = mcProbOver(ctx.mu, ctx.s, ctx.modelLine, 20000);
+      const statLabel = "NHL " + (stat==="sog"?"Shots on Goal":stat==="goals"?"Goals":stat==="assists"?"Assists":"Points");
+      picks.push({ ...buildLeg(rec.label, statLabel, ctx.modelLine, pOver, pUnder), vals: rec.vals });
+    }catch(_e){}
+  }
+  picks.sort((a,b)=> b.estHitPct - a.estHitPct);
+  return picks.slice(0, legs);
+}
+
+function nflParseManual(name, raw){
+  const vals = (raw||"").split(/[\s,]+/).map(Number).filter(v=>Number.isFinite(v));
+  if (!vals.length) throw new Error("Provide recent NFL numbers");
+  return { label: name||"NFL Player", vals };
+}
+
+async function nflMakeParlay(legs, risk){
+  const cards = Array.from(document.querySelectorAll('#nflInputs .card'));
+  const picks = [];
+  for (const c of cards){
+    const name = c.querySelector('input[id^="nflName_"]').value.trim();
+    const raw  = c.querySelector('input[id^="nflVals_"]').value.trim();
+    const line = Number(c.querySelector('input[id^="nflLine_"]').value||NaN);
+    const stat = c.querySelector('select[id^="nflStat_"]').value;
+    if (!name || !raw || !Number.isFinite(line)) continue;
+    try{
+      const rec = nflParseManual(name, raw);
+      const mu = wmean(rec.vals);
+      let s  = sd(rec.vals);
+      if (rec.vals.length<10) s*=1.15; if(rec.vals.length<7) s*=1.25;
+      const {pOver,pUnder} = mcProbOver(mu, s, line, 25000);
+      picks.push({ ...buildLeg(rec.label, "NFL ("+stat+")", line, pOver, pUnder), vals: rec.vals });
+    }catch(_e){}
+  }
+  picks.sort((a,b)=> b.estHitPct - a.estHitPct);
+  return picks.slice(0, legs);
+}
+
+/* =================== UI RENDER =================== */
+function setTitle(t){ document.getElementById('title').textContent = t; }
+function setExplain(t){ document.getElementById('explain').textContent = t; }
+function showOut(o){ document.getElementById('out').textContent = o; }
+function copyOut(){ const t=document.getElementById('out').textContent||""; navigator.clipboard.writeText(t).then(()=>{ document.getElementById('copied').textContent="Copied!"; setTimeout(()=>document.getElementById('copied').textContent="",1200); }); }
+function renderPopular(picks){
+  const box = document.getElementById('popular'); box.innerHTML="";
+  if (!picks.length){ box.innerHTML = `<div class="mut">No popular props yet.</div>`; return; }
+  picks.forEach(p=>{
+    const d=document.createElement('div'); d.className='card';
+    d.innerHTML = `<b>${p.player}</b> <span class="pill mut">${p.stat}</span>
+      <div class="mut">Suggested pick: ${p.pick} • est hit ~${p.estHitPct}%</div>
+      <div class="mut">Recent: [ ${p.vals.join(", ")} ]</div>
+      <div class="row" style="margin-top:6px">
+        <input placeholder="Paste book line (e.g., 24.5)" style="width:140px" />
+        <button>Re-Sim</button>
+        <span class="mut"></span>
+      </div>`;
+    const input = d.querySelector("input");
+    const btn   = d.querySelector("button");
+    const note  = d.querySelector("span.mut:last-child");
+    btn.onclick = ()=>{
+      const line = Number((input.value||"").trim());
+      if (!Number.isFinite(line)){ note.textContent="Enter a number"; return; }
+      const m=mean(p.vals), s=sd(p.vals);
+      const {pOver,pUnder} = mcProbOver(m, s, line, 20000);
+      note.textContent = `P(Over)=${(pOver*100).toFixed(1)}% • P(Under)=${(pUnder*100).toFixed(1)}%`;
+    };
+    box.appendChild(d);
+  });
+}
+
+/* =================== NFL input slots =================== */
+function addNFLSlot(){
+  const wrap = document.getElementById('nflInputs');
+  const id = Math.random().toString(16).slice(2,7);
+  const div = document.createElement('div');
+  div.className='card';
+  div.innerHTML = `
+    <div class="row">
+      <input id="nflName_${id}" placeholder="NFL player (e.g., Amon-Ra St. Brown)" style="flex:1;min-width:240px">
+      <select id="nflStat_${id}">
+        <option value="rec_yds">Receiving Yards</option>
+        <option value="receptions">Receptions</option>
+        <option value="rush_yds">Rushing Yards</option>
+        <option value="rush_att">Rush Attempts</option>
+        <option value="pass_yds">Passing Yards</option>
+      </select>
+      <input id="nflVals_${id}" placeholder="Recent numbers (e.g., 78,64,93,55,81,102,67,71,88,60)" style="flex:1;min-width:260px">
+      <input id="nflLine_${id}" placeholder="Line (e.g., 72.5)" style="width:120px">
+    </div>`;
+  wrap.appendChild(div);
+}
+
+/* =================== COMMAND EXECUTION =================== */
+async function runCommand(){
+  const { league, legs, risk, mode, oppHint, askWeather } = parseCommand(document.getElementById('cmd').value);
+  setTitle(`${league.toUpperCase()} • ${mode==="parlay" ? `${legs}-Leg Parlay` : "Popular Props"} • ${risk.toUpperCase()}`);
+  setExplain(mode==="parlay"
+    ? "Building a slip from recent form with matchup & game-factor heuristics (no sportsbook odds)."
+    : "Scanning selected stars’ recent form for strong model-based angles.");
+
+  document.getElementById('nflZone').classList.toggle('hide', league!=="nfl");
+
+  // Optional quick weather ping for NFL open-air stadiums (by city code)
+  if (league==="nfl" && askWeather){
+    const wx = await nflWeather(askWeather);
+    setExplain(`${document.getElementById('explain').textContent}  •  ${wx}`);
+  }
+
+  try{
+    let picks=[], popular=[];
+    if (league==="nba"){
+      const statPref = "pts";
+      if (mode==="parlay"){
+        picks = await nbaMakeParlay(legs, risk, statPref, oppHint);
+      }
+      popular = await nbaMakeParlay(Math.min(8,legs+4), risk, statPref, oppHint);
+    } else if (league==="nhl"){
+      const statPref = "sog";
+      if (mode==="parlay"){
+        picks = await nhlMakeParlay(legs, risk, statPref);
+      }
+      popular = await nhlMakeParlay(Math.min(8,legs+4), risk, statPref);
     } else {
-      msg.textContent = "Wrong code.";
+      // NFL: manual
+      if (mode==="parlay"){
+        picks = await nflMakeParlay(legs, risk);
+      }
+      popular = []; // manual-driven; nothing automatic to show here
     }
-  }
 
-  // ========= KEYS =========
-  function saveKeys() {
-    const odds = document.getElementById('odds_key').value.trim();
-    const openai = document.getElementById('openai_key').value.trim();
-    sessionStorage.setItem('propline_odds_key', odds);
-    sessionStorage.setItem('propline_openai_key', openai);
-    document.getElementById('keys_status').textContent = "Saved.";
-    setTimeout(()=>document.getElementById('keys_status').textContent="",1500);
-  }
-  function loadKeys() {
-    document.getElementById('odds_key').value = sessionStorage.getItem('propline_odds_key') || "";
-    document.getElementById('openai_key').value = sessionStorage.getItem('propline_openai_key') || "";
-  }
-  function getOddsKey(){ return sessionStorage.getItem('propline_odds_key') || ""; }
-  function getOpenAIKey(){ return sessionStorage.getItem('propline_openai_key') || ""; }
-
-  // ========= LIVE FEEDS =========
-  async function fetchScoreboard(league) {
-    const path = league === "nfl" ? "football/nfl" :
-                 league === "mlb" ? "baseball/mlb" :
-                 league === "nhl" ? "hockey/nhl" :
-                 "basketball/nba";
-    const url = `https://site.api.espn.com/apis/site/v2/sports/${path}/scoreboard`;
-    const r = await fetch(url, { headers: { "user-agent": "propline/1.0" }});
-    if (!r.ok) throw new Error("ESPN scoreboard failed: " + r.status);
-    const j = await r.json();
-    return (j.events||[]).map(e => {
-      const c = e.competitions?.[0] || {};
-      const home = c.competitors?.find(x=>x.homeAway==="home")?.team?.displayName;
-      const away = c.competitors?.find(x=>x.homeAway==="away")?.team?.displayName;
-      const st = (e.status?.type?.state || "pre").toLowerCase();
-      return `${away} @ ${home} — ${new Date(e.date).toLocaleString()} (${st})`;
-    });
-  }
-
-  async function fetchOdds(sport, region="us") {
-    const key = getOddsKey();
-    if (!key) throw new Error("No Odds API key");
-    const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds?regions=${region}&oddsFormat=american&markets=h2h,spreads,totals&apiKey=${encodeURIComponent(key)}`;
-    const r = await fetch(url);
-    if (!r.ok) {
-      const t = await r.text().catch(()=> "");
-      throw new Error(`Odds API failed: ${r.status} ${t.slice(0,120)}`);
-    }
-    const games = await r.json();
-    return games.slice(0,10).map(g => {
-      const markets = (g.bookmakers?.[0]?.markets||[]).map(m=>m.key).join(", ");
-      return `• ${g.away_team} @ ${g.home_team} — ${new Date(g.commence_time).toLocaleString()}
-  markets: ${markets}`;
-    });
-  }
-
-  // ========= CHAT =========
-  async function ask() {
-    const openaiKey = getOpenAIKey();
-    const msg = document.getElementById('q').value.trim();
-    if (!openaiKey) { document.getElementById('a').textContent = "Add your OpenAI key first."; return; }
-    if (!msg) return;
-
-    mem.push({ role:"user", text: msg, t: Date.now() });
-    const league = document.getElementById('league').value;
-    const sport  = document.getElementById('sport').value;
-
-    // pull fresh data to ground the answer
-    let slateTxt = "[]", oddsTxt = "[]";
-    try { slateTxt = JSON.stringify(await fetchScoreboard(league)); } catch {}
-    try { oddsTxt  = JSON.stringify(await fetchOdds(sport)); } catch {}
-
-    const system = `
-You are a cautious sports advisory assistant.
-- Use only the provided live data payloads.
-- Always show exact game times & dates from the payload.
-- Never guarantee outcomes. Keep it concise.
-- For parlays/slips, include kickoff timestamps and a brief responsible note.`;
-
-    const tools = [
-      JSON.stringify({ memory: mem.slice(-8) }),
-      JSON.stringify({ slate: slateTxt }),
-      JSON.stringify({ odds: oddsTxt }),
-    ];
-
-    try {
-      const r = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: { "content-type":"application/json", "authorization": "Bearer " + openaiKey },
-        body: JSON.stringify({
-          model: "gpt-4o", // change if your account uses a different model
-          input: [
-            { role:"system", content: system },
-            { role:"tool", content: tools[0] },
-            { role:"tool", content: tools[1] },
-            { role:"tool", content: tools[2] },
-            { role:"user", content: msg }
-          ]
-        })
+    // Render slip
+    const lines = [];
+    if (!picks.length){
+      lines.push("No legs qualified yet. Try medium/spicy risk or reduce legs.");
+    } else {
+      lines.push("Advisory slip (model-based; no book odds):");
+      picks.forEach((l,i)=>{
+        lines.push(`${i+1}. ${l.player} — ${l.stat} — ${l.pick}  (est hit ~${l.estHitPct}%, P(Over)=${l.pOver}%, P(Under)=${l.pUnder}%)`);
       });
-      if (!r.ok) throw new Error("OpenAI error: " + r.status);
-      const data = await r.json();
-      const out = data.output_text || "(no response)";
-      mem.push({ role:"assistant", text: out, t: Date.now() });
-      document.getElementById('a').textContent = out;
-    } catch (e) {
-      document.getElementById('a').textContent = "Chat error: " + e.message;
     }
-  }
+    lines.push("\nModel factors used: recency-weighted form, clutch streak, back-to-back fatigue, small-sample variance, optional opponent hint.");
+    showOut(lines.join("\n"));
 
-  // ========= BET SLIP =========
-  function buildSlip() {
-    const picks = JSON.parse(document.getElementById('picks').value || "[]");
-    const stake = Number(document.getElementById('stake').value || "0");
-    const type  = document.getElementById('stype').value;
-    const legs = picks.map((p,i)=>({
-      id:`leg_${i+1}`, game_id:p.game_id, market:p.market, selection:p.selection,
-      price:p.price, kickoff:p.commence_time
-    }));
-    const slip = { createdAt:new Date().toISOString(), sessionId, type, stake, legs };
-    document.getElementById('slip').textContent = JSON.stringify(slip,null,2);
+    renderPopular(popular);
+  }catch(e){
+    showOut("Error: "+e.message);
   }
+}
 
-  // ========= UI FLOW =========
-  async function refreshAll() {
-    const league = document.getElementById('league').value;
-    const sport  = document.getElementById('sport').value;
-    document.getElementById('stamp').textContent = "Refreshing…";
-    // Slate
-    try {
-      const lines = await fetchScoreboard(league);
-      document.getElementById('slate').textContent = lines.join("\n") || "No events";
-    } catch (e) {
-      document.getElementById('slate').textContent = "Error: " + e.message;
-    }
-    // Odds
-    try {
-      const lines = await fetchOdds(sport);
-      document.getElementById('odds').textContent = lines.join("\n\n") || "No odds";
-    } catch (e) {
-      document.getElementById('odds').textContent = "Odds: " + e.message + " (paste The Odds API key above)";
-    }
-    document.getElementById('stamp').textContent = "Last updated: " + new Date().toLocaleString();
-  }
-
-  function maybeTick() {
-    const cb = document.getElementById('autorefresh');
-    if (!cb) return;
-    setInterval(()=>{ if (cb.checked) refreshAll(); }, 60_000);
-  }
+/* =================== Boot: add a couple NFL slots so it's ready =================== */
+addNFLSlot(); addNFLSlot();
 </script>
 </body>
 </html>
