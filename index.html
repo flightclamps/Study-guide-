@@ -1,823 +1,295 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>E-Commerce 2023 Holiday Quiz</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /* slate-900 */
-            color: #f1f5f9; /* slate-100 */
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Snow Animation */
-        .snowflake {
-            position: fixed;
-            top: -20px;
-            background: white;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes fall {
-            0% { transform: translateY(-10vh) translateX(0px); }
-            100% { transform: translateY(110vh) translateX(20px); }
-        }
-
-        /* Lights Animation */
-        @keyframes twinkle {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-
-        .light {
-            animation: twinkle 1.5s infinite;
-        }
-
-        /* Fade-in */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        button {
-            touch-action: manipulation;
-        }
-
-        /* RGBIC-style glowing border around quiz card */
-        .rgbic-border {
-            position: relative;
-        }
-        .rgbic-border::before {
-            content: "";
-            position: absolute;
-            inset: -2px;
-            border-radius: 1.25rem;
-            background: linear-gradient(
-                120deg,
-                #f97373,
-                #22c55e,
-                #facc15,
-                #22d3ee,
-                #a855f7,
-                #f97373
-            );
-            background-size: 300% 300%;
-            animation: rgbicGlow 6s linear infinite;
-            z-index: -1;
-        }
-        @keyframes rgbicGlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PROPLINE • Live Advisory</title>
+<style>
+  :root{--bg:#0b0d10;--fg:#e7edf2;--mut:#9fb2c7;--border:#1b1f24;--card:#0f1318}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif}
+  header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  main{max-width:980px;margin:0 auto;padding:20px}
+  input,select,button,textarea{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:10px;padding:10px}
+  button{cursor:pointer}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .card{border:1px solid var(--border);border-radius:14px;padding:14px;margin:10px 0;background:linear-gradient(180deg,#0e1217,#0b0d10)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+  .mut{color:var(--mut)}
+  .hide{display:none}
+  .ok{color:#68f3a2}
+  .err{color:#ff8080}
+</style>
 </head>
-<body class="min-h-screen flex flex-col items-center">
+<body>
+<header>
+  <strong>PROPLINE • Live Advisory</strong>
+  <span class="mut" style="font-size:12px">Advisory/education only — bet responsibly</span>
+</header>
 
-    <!-- Snow Container -->
-    <div id="snow-container"></div>
+<main>
+  <!-- ACCESS GATE -->
+  <div id="gate" class="card">
+    <div class="row">
+      <b>Enter access code:</b>
+      <input id="code" placeholder="64786" inputmode="numeric" pattern="[0-9]*" />
+      <button onclick="unlock()">Unlock</button>
+      <span id="gate_msg" class="mut"></span>
+    </div>
+  </div>
 
-    <!-- Christmas Lights -->
-    <div class="w-full flex justify-center py-3 z-10">
-        <div id="lights-container" class="flex space-x-3 md:space-x-8"></div>
+  <!-- APP BODY -->
+  <div id="app" class="hide">
+    <!-- KEYS -->
+    <div class="card">
+      <div class="row">
+        <b>Keys (stored only in this browser tab)</b>
+      </div>
+      <div class="row">
+        <label style="flex:1">The Odds API key
+          <input id="odds_key" placeholder="paste when you want live odds" style="width:100%">
+        </label>
+        <label style="flex:1">OpenAI key
+          <input id="openai_key" placeholder="sk-..." style="width:100%">
+        </label>
+        <button onclick="saveKeys()">Save</button>
+        <span id="keys_status" class="mut"></span>
+      </div>
+      <div class="mut" style="margin-top:6px;font-size:12px">
+        On GitHub Pages your keys are visible to users of this page. For private keys, run this behind a server later.
+      </div>
     </div>
 
-    <div class="z-10 w-full max-w-2xl px-3 sm:px-4 pb-12 mt-2 sm:mt-4">
-        <!-- Header -->
-        <div class="text-center mb-6 sm:mb-8">
-            <h1 class="text-2xl sm:text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-emerald-300 to-green-400 drop-shadow-sm mb-1 sm:mb-2">
-                E-Commerce 2023
-            </h1>
-            <div class="flex items-center justify-center space-x-1 sm:space-x-2 text-slate-300 text-xs sm:text-sm">
-                <!-- Gift Icon Left -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 12a1 1 0 00-1-1v-2.5a.5.5 0 00-.5-.5h-2.293a1 1 0 00-.707.293l-1.647 1.647a.5.5 0 00-.146.353V12a1 1 0 00-1 1v4.5a.5.5 0 00.5.5h2.293a1 1 0 00.707-.293l1.647-1.647a.5.5 0 00.146-.353V16.5a1 1 0 001-1V12z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 12a1 1 0 011-1v-2.5a.5.5 0 01.5-.5h2.293a1 1 0 01.707.293l1.647 1.647a.5.5 0 01.146.353V12a1 1 0 01-1 1v4.5a.5.5 0 01-.5.5H6.293a1 1 0 01-.707-.293l-1.647-1-647a.5.5 0 01-.146-.353V16.5a1 1 0 01-1-1V12z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h18" />
-                </svg>
-                <span class="text-sm sm:text-base font-semibold">Holiday Exam Edition</span>
-                <!-- Gift Icon Right -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 12a1 1 0 00-1-1v-2.5a.5.5 0 00-.5-.5h-2.293a1 1 0 00-.707.293l-1.647 1.647a.5.5 0 00-.146.353V12a1 1 0 00-1 1v4.5a.5.5 0 00.5.5h2.293a1 1 0 00.707-.293l1.647-1.647a.5.5 0 00.146-.353V16.5a1 1 0 001-1V12z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 12a1 1 0 011-1v-2.5a.5.5 0 01.5-.5h2.293a1 1 0 01.707.293l1.647 1.647a.5.5 0 01.146.353V12a1 1 0 01-1 1v4.5a.5.5 0 01-.5.5H6.293a1 1 0 01-.707-.293l-1.647-1.647a.5.5 0 01-.146-.353V16.5a1 1 0 01-1-1V12z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h18" />
-                </svg>
-            </div>
-        </div>
-
-        <!-- Quiz Container -->
-        <div id="quiz-card" class="rgbic-border rounded-2xl p-[1px]">
-          <div class="bg-slate-900/90 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl border border-white/10 min-h-[380px] sm:min-h-[400px]">
-            
-            <!-- Progress Section -->
-            <div id="progress-section" class="mb-3 sm:mb-4">
-                <div class="flex justify-between text-[11px] sm:text-sm text-slate-400 mb-2">
-                    <span id="question-tracker">Question 1 of 30</span>
-                    <span id="score-tracker">Score: 0</span>
-                </div>
-                <div class="w-full bg-slate-700 rounded-full h-2">
-                    <div id="progress-bar" class="bg-gradient-to-r from-red-500 via-emerald-400 to-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- Question Navigator -->
-            <div id="question-nav" class="mb-4 grid grid-cols-10 gap-1 sm:gap-2 text-[11px] sm:text-xs">
-                <!-- nav buttons injected here -->
-            </div>
-
-            <!-- Question Text -->
-            <div id="question-container" class="mb-5 sm:mb-6">
-                <h3 id="question-text" class="text-lg sm:text-xl md:text-2xl font-semibold leading-relaxed fade-in">
-                    Loading Question...
-                </h3>
-            </div>
-
-            <!-- Options -->
-            <div id="options-container" class="space-y-2.5 sm:space-y-3">
-                <!-- Options injected here -->
-            </div>
-
-            <!-- Explanation & Next Button Area -->
-            <div id="feedback-area" class="mt-5 sm:mt-6 hidden fade-in">
-                <div id="explanation-box" class="p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border">
-                    <p id="feedback-title" class="font-semibold mb-1 text-xs sm:text-sm uppercase tracking-wider opacity-70">Correct!</p>
-                    <p id="explanation-text" class="text-slate-200 text-sm sm:text-base">Explanation text goes here.</p>
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
-                    <button id="retry-btn" class="w-full sm:w-1/2 flex items-center justify-center space-x-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 sm:py-3 px-4 rounded-xl transition-all transform active:scale-[0.98] hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        <span>Retry Question</span>
-                    </button>
-
-                    <button id="next-btn" class="w-full sm:w-1/2 flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-400 hover:from-red-500 hover:via-rose-400 hover:to-red-300 text-white font-bold py-2.5 sm:py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]">
-                        <span id="next-btn-text">Next Question</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Results Section (Hidden initially) -->
-            <div id="results-section" class="hidden text-center py-8 fade-in">
-                <div class="inline-block p-4 rounded-full bg-slate-800/50 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 sm:w-16 sm:h-16 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
-                </div>
-                <h2 class="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Quiz Complete!</h2>
-                <p class="text-lg sm:text-xl mb-4 sm:mb-6">
-                    You scored <span id="final-score" class="font-bold text-green-400">0</span> out of <span id="total-questions" class="font-bold">30</span>
-                </p>
-                
-                <div id="final-message" class="mb-6 sm:mb-8 text-base sm:text-lg"></div>
-
-                <button onclick="restartQuiz()" class="flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 via-teal-400 to-green-500 hover:from-emerald-500 hover:via-teal-300 hover:to-green-400 text-white font-bold py-3 sm:py-3.5 px-6 sm:px-8 rounded-full transition-all transform hover:scale-105 active:scale-[0.99] mx-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Take Quiz Again</span>
-                </button>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="text-center mt-6 sm:mt-8 text-slate-500 text-xs sm:text-sm">
-            Based on "E-Commerce 2023" by Laudon &amp; Traver
-        </div>
+    <!-- CONTROLS -->
+    <div class="card">
+      <div class="row">
+        <label>League
+          <select id="league">
+            <option value="nba">NBA</option>
+            <option value="nfl">NFL</option>
+            <option value="mlb">MLB</option>
+            <option value="nhl">NHL</option>
+          </select>
+        </label>
+        <label>Sport key (Odds API)
+          <select id="sport">
+            <option value="basketball_nba">basketball_nba</option>
+            <option value="americanfootball_nfl">americanfootball_nfl</option>
+            <option value="baseball_mlb">baseball_mlb</option>
+            <option value="icehockey_nhl">icehockey_nhl</option>
+          </select>
+        </label>
+        <button onclick="refreshAll()">Refresh now</button>
+        <label><input id="autorefresh" type="checkbox" checked /> auto-refresh (60s)</label>
+        <span id="stamp" class="mut"></span>
+      </div>
     </div>
 
-    <script>
-        // --- DATA ---
-        const questions = [
-            {
-                question: "1. Which of the following best distinguishes e-commerce from e-business?",
-                options: [
-                    { text: "E-commerce is internal; e-business is external.", isCorrect: false },
-                    { text: "E-commerce involves digitally enabled commercial transactions between organizations and individuals; e-business involves internal digital processes.", isCorrect: true },
-                    { text: "E-commerce is limited to retail; e-business covers everything else.", isCorrect: false },
-                    { text: "There is no distinction.", isCorrect: false },
-                ],
-                explanation: "E-commerce focuses on revenue-generating transactions with outside parties, while e-business focuses on internal efficiency."
-            },
-            {
-                question: "2. The feature of e-commerce technology that allows it to be available everywhere (work, home, mobile) is called:",
-                options: [
-                    { text: "Richness", isCorrect: false },
-                    { text: "Ubiquity", isCorrect: true },
-                    { text: "Interactivity", isCorrect: false },
-                    { text: "Global Reach", isCorrect: false },
-                ],
-                explanation: "Ubiquity means the marketspace is available everywhere, removing physical location as a constraint."
-            },
-            {
-                question: "3. Which unique feature of e-commerce technology allows merchants to target marketing messages to specific individuals based on their interests?",
-                options: [
-                    { text: "Personalization/Customization", isCorrect: true },
-                    { text: "Information Density", isCorrect: false },
-                    { text: "Universal Standards", isCorrect: false },
-                    { text: "Richness", isCorrect: false },
-                ],
-                explanation: "Personalization allows for tailoring messages and products to specific individuals."
-            },
-            {
-                question: "4. The lowering of information entry costs and the ability for consumers to find prices easily describes which feature?",
-                options: [
-                    { text: "Information Density", isCorrect: true },
-                    { text: "Interactivity", isCorrect: false },
-                    { text: "Social Technology", isCorrect: false },
-                    { text: "Ubiquity", isCorrect: false },
-                ],
-                explanation: "Information density refers to the total amount and quality of information available to all market participants."
-            },
-            {
-                question: "5. Which term describes the displacement of market middlemen (distributors, wholesalers) by a direct relationship between manufacturers and consumers?",
-                options: [
-                    { text: "Network Effects", isCorrect: false },
-                    { text: "Disintermediation", isCorrect: true },
-                    { text: "Friction-free Commerce", isCorrect: false },
-                    { text: "First Mover Advantage", isCorrect: false },
-                ],
-                explanation: "Disintermediation removes the 'middleman,' allowing direct sales."
-            },
-            {
-                question: "6. A company that offers basic services for free but charges for premium features is using which revenue model?",
-                options: [
-                    { text: "Subscription", isCorrect: false },
-                    { text: "Freemium", isCorrect: true },
-                    { text: "Affiliate", isCorrect: false },
-                    { text: "Transaction Fee", isCorrect: false },
-                ],
-                explanation: "Freemium builds a user base with free tools and monetizes advanced features (e.g., Spotify, Dropbox)."
-            },
-            {
-                question: "7. eBay is a prime example of which B2C business model?",
-                options: [
-                    { text: "E-tailer", isCorrect: false },
-                    { text: "Portal", isCorrect: false },
-                    { text: "Market Creator", isCorrect: true },
-                    { text: "Content Provider", isCorrect: false },
-                ],
-                explanation: "Market Creators build a digital environment where buyers and sellers can meet and transact."
-            },
-            {
-                question: "8. Which revenue model involves fees for referring business to other sites?",
-                options: [
-                    { text: "Sales Revenue", isCorrect: false },
-                    { text: "Affiliate Revenue", isCorrect: true },
-                    { text: "Subscription Revenue", isCorrect: false },
-                    { text: "Advertising Revenue", isCorrect: false },
-                ],
-                explanation: "Affiliate models pay commissions for referrals (e.g., blogs linking to Amazon products)."
-            },
-            {
-                question: "9. 'First-mover advantage' refers to:",
-                options: [
-                    { text: "The first person to buy a product.", isCorrect: false },
-                    { text: "A competitive market advantage for a firm that results from being the first into a marketplace.", isCorrect: true },
-                    { text: "Moving a website to a new server first.", isCorrect: false },
-                    { text: "The first country to regulate the internet.", isCorrect: false },
-                ],
-                explanation: "Being first allows a firm to build brand name and shut out competitors, though it comes with risks."
-            },
-            {
-                question: "10. Which business model provides a digital environment where users can search, find news, and access email (e.g., Yahoo, MSN)?",
-                options: [
-                    { text: "Portal", isCorrect: true },
-                    { text: "Community Provider", isCorrect: false },
-                    { text: "Transaction Broker", isCorrect: false },
-                    { text: "Service Provider", isCorrect: false },
-                ],
-                explanation: "Portals serve as a gateway to the internet, aggregating content and services."
-            },
-            {
-                question: "11. Which protocol is the foundation of the Internet, governing how data is packetized and addressed?",
-                options: [
-                    { text: "HTTP", isCorrect: false },
-                    { text: "TCP/IP", isCorrect: true },
-                    { text: "FTP", isCorrect: false },
-                    { text: "HTML", isCorrect: false },
-                ],
-                explanation: "Transmission Control Protocol/Internet Protocol (TCP/IP) is the core communications protocol."
-            },
-            {
-                question: "12. The method of slicing digital messages into parcels, sending them along different paths, and reassembling them is called:",
-                options: [
-                    { text: "Circuit Switching", isCorrect: false },
-                    { text: "Packet Switching", isCorrect: true },
-                    { text: "Broadcasting", isCorrect: false },
-                    { text: "Multiplexing", isCorrect: false },
-                ],
-                explanation: "Packet switching is more efficient than circuit switching for bursty data traffic."
-            },
-            {
-                question: "13. What is the primary difference between IPv4 and IPv6?",
-                options: [
-                    { text: "IPv6 is slower but more secure.", isCorrect: false },
-                    { text: "IPv6 allows for a vastly larger number of IP addresses.", isCorrect: true },
-                    { text: "IPv4 is for mobile devices only.", isCorrect: false },
-                    { text: "IPv6 does not use numbers.", isCorrect: false },
-                ],
-                explanation: "IPv6 uses 128-bit addresses to solve the exhaustion of IPv4's 32-bit address space."
-            },
-            {
-                question: "14. A model of computing where firms obtain computing power and software over the Internet rather than managing their own hardware is:",
-                options: [
-                    { text: "Client/Server", isCorrect: false },
-                    { text: "Cloud Computing", isCorrect: true },
-                    { text: "Mainframe Computing", isCorrect: false },
-                    { text: "Edge Computing", isCorrect: false },
-                ],
-                explanation: "Cloud computing (IaaS, PaaS, SaaS) allows renting resources like AWS or Azure."
-            },
-            {
-                question: "15. Which markup language is used to create the structure and content of web pages?",
-                options: [
-                    { text: "CSS", isCorrect: false },
-                    { text: "Java", isCorrect: false },
-                    { text: "HTML", isCorrect: true },
-                    { text: "Python", isCorrect: false },
-                ],
-                explanation: "HyperText Markup Language (HTML) defines the structure of web content."
-            },
-            {
-                question: "16. Which security dimension ensures that information has not been altered by an unauthorized party?",
-                options: [
-                    { text: "Confidentiality", isCorrect: false },
-                    { text: "Integrity", isCorrect: true },
-                    { text: "Availability", isCorrect: false },
-                    { text: "Privacy", isCorrect: false },
-                ],
-                explanation: "Integrity guarantees the data sent is the data received, without modification."
-            },
-            {
-                question: "17. 'Non-repudiation' refers to:",
-                options: [
-                    { text: "Keeping data secret.", isCorrect: false },
-                    { text: "The inability to deny having performed an action or transaction.", isCorrect: true },
-                    { text: "Preventing website crashes.", isCorrect: false },
-                    { text: "Encrypting passwords.", isCorrect: false },
-                ],
-                explanation: "Non-repudiation provides proof of the origin of data and protects against false denial of a transaction."
-            },
-            {
-                question: "18. A cyberattack that floods a server with traffic to crash it is called:",
-                options: [
-                    { text: "Phishing", isCorrect: false },
-                    { text: "SQL Injection", isCorrect: false },
-                    { text: "Ransomware", isCorrect: false },
-                    { text: "DDoS (Distributed Denial of Service)", isCorrect: true },
-                ],
-                explanation: "DDoS attacks aim to make a service unavailable by overwhelming it with requests."
-            },
-            {
-                question: "19. Which technology serves as the distributed ledger for cryptocurrencies like Bitcoin?",
-                options: [
-                    { text: "NFC", isCorrect: false },
-                    { text: "Blockchain", isCorrect: true },
-                    { text: "ACH", isCorrect: false },
-                    { text: "RFID", isCorrect: false },
-                ],
-                explanation: "Blockchain is a decentralized, immutable ledger system."
-            },
-            {
-                question: "20. What is a 'digital wallet' (e.g., Apple Pay, Google Pay)?",
-                options: [
-                    { text: "A physical device for storing coins.", isCorrect: false },
-                    { text: "Software that stores credit card and other information to facilitate payment.", isCorrect: true },
-                    { text: "A cryptocurrency exchange.", isCorrect: false },
-                    { text: "A bank account.", isCorrect: false },
-                ],
-                explanation: "Digital wallets store credentials to simplify and secure the checkout process."
-            },
-            {
-                question: "21. 'Clickstream behavior' tracks:",
-                options: [
-                    { text: "Mouse clicks only.", isCorrect: false },
-                    { text: "The exact path a consumer takes through a website.", isCorrect: true },
-                    { text: "Email open rates.", isCorrect: false },
-                    { text: "Social media likes.", isCorrect: false },
-                ],
-                explanation: "Clickstream data reveals the user's journey, time spent on pages, and navigation patterns."
-            },
-            {
-                question: "22. Automated, auction-based buying of ad inventory in real-time is known as:",
-                options: [
-                    { text: "Programmatic Advertising", isCorrect: true },
-                    { text: "Native Advertising", isCorrect: false },
-                    { text: "Direct Marketing", isCorrect: false },
-                    { text: "Viral Marketing", isCorrect: false },
-                ],
-                explanation: "Programmatic advertising uses algorithms and RTB (Real Time Bidding) to buy ad space instantly."
-            },
-            {
-                question: "23. Which EU regulation mandates strict data privacy protections for individuals?",
-                options: [
-                    { text: "DMCA", isCorrect: false },
-                    { text: "GDPR", isCorrect: true },
-                    { text: "COPPA", isCorrect: false },
-                    { text: "HIPAA", isCorrect: false },
-                ],
-                explanation: "The General Data Protection Regulation (GDPR) is the toughest privacy and security law in the world."
-            },
-            {
-                question: "24. 'Net Neutrality' is the principle that:",
-                options: [
-                    { text: "Internet access should be free.", isCorrect: false },
-                    { text: "ISPs should treat all data equally without discrimination.", isCorrect: true },
-                    { text: "All websites should look the same.", isCorrect: false },
-                    { text: "Governments should own the internet.", isCorrect: false },
-                ],
-                explanation: "Net Neutrality opposes throttling, blocking, or paid prioritization of internet traffic."
-            },
-            {
-                question: "25. Which form of intellectual property protects original works of authorship (books, music, code)?",
-                options: [
-                    { text: "Patent", isCorrect: false },
-                    { text: "Trademark", isCorrect: false },
-                    { text: "Copyright", isCorrect: true },
-                    { text: "Trade Secret", isCorrect: false },
-                ],
-                explanation: "Copyright protects expression of ideas (literary, musical, dramatic, etc.) for a specific duration."
-            },
-            {
-                question: "26. 'Bricks-and-clicks' refers to:",
-                options: [
-                    { text: "Online-only stores.", isCorrect: false },
-                    { text: "Physical stores that also have an online presence.", isCorrect: true },
-                    { text: "Construction companies.", isCorrect: false },
-                    { text: "Social media influencers.", isCorrect: false },
-                ],
-                explanation: "It describes the omni-channel strategy of traditional retailers adding e-commerce channels."
-            },
-            {
-                question: "27. The 'Right to Be Forgotten' allows individuals to:",
-                options: [
-                    { text: "Delete all their emails.", isCorrect: false },
-                    { text: "Request removal of personal data from search results.", isCorrect: true },
-                    { text: "Change their legal name.", isCorrect: false },
-                    { text: "Avoid paying taxes.", isCorrect: false },
-                ],
-                explanation: "Primarily in the EU, this allows users to ask for outdated or irrelevant personal info to be de-indexed."
-            },
-            {
-                question: "28. What is 'Dynamic Pricing'?",
-                options: [
-                    { text: "Changing prices based on real-time demand and supply.", isCorrect: true },
-                    { text: "Setting one price for all customers.", isCorrect: false },
-                    { text: "Giving discounts to new users only.", isCorrect: false },
-                    { text: "Using foreign currency.", isCorrect: false },
-                ],
-                explanation: "Used by Uber (surge pricing) and airlines, prices fluctuate instantly based on market conditions."
-            },
-            {
-                question: "29. Which of the following refers to the set of standards for B2B document exchange (invoices, purchase orders)?",
-                options: [
-                    { text: "ERP", isCorrect: false },
-                    { text: "CRM", isCorrect: false },
-                    { text: "EDI (Electronic Data Interchange)", isCorrect: true },
-                    { text: "SQL", isCorrect: false },
-                ],
-                explanation: "EDI is the legacy standard for automated B2B transactions."
-            },
-            {
-                question: "30. The 'Long Tail' in e-commerce refers to:",
-                options: [
-                    { text: "Selling a few hit products to many people.", isCorrect: false },
-                    { text: "Selling a large number of unique items in small quantities.", isCorrect: true },
-                    { text: "The time it takes to ship a product.", isCorrect: false },
-                    { text: "A type of network cable.", isCorrect: false },
-                ],
-                explanation: "E-commerce allows retailers (like Amazon) to stock obscure items profitably, serving the 'long tail' of the demand curve."
-            },
-        ];
+    <!-- SLATE -->
+    <div class="card">
+      <h3>Today’s Slate (live dates & times)</h3>
+      <pre id="slate" class="mono">—</pre>
+    </div>
 
-        // --- STATE ---
-        let currentQuestionIndex = 0;
-        let questionStates = questions.map(() => ({
-            answered: false,
-            isCorrect: false,
-            selectedIndex: null
-        }));
-        let score = 0;
+    <!-- ODDS -->
+    <div class="card">
+      <h3>Live Odds (H2H, spreads, totals)</h3>
+      <div class="mut" style="font-size:12px">Requires The Odds API key above.</div>
+      <pre id="odds" class="mono">—</pre>
+    </div>
 
-        // --- ELEMENTS ---
-        const snowContainer = document.getElementById('snow-container');
-        const lightsContainer = document.getElementById('lights-container');
-        const questionTracker = document.getElementById('question-tracker');
-        const scoreTracker = document.getElementById('score-tracker');
-        const progressBar = document.getElementById('progress-bar');
-        const questionText = document.getElementById('question-text');
-        const optionsContainer = document.getElementById('options-container');
-        const feedbackArea = document.getElementById('feedback-area');
-        const feedbackTitle = document.getElementById('feedback-title');
-        const explanationText = document.getElementById('explanation-text');
-        const explanationBox = document.getElementById('explanation-box');
-        const nextBtn = document.getElementById('next-btn');
-        const nextBtnText = document.getElementById('next-btn-text');
-        const retryBtn = document.getElementById('retry-btn');
-        const progressSection = document.getElementById('progress-section');
-        const resultsSection = document.getElementById('results-section');
-        const finalScore = document.getElementById('final-score');
-        const totalQuestionsSpan = document.getElementById('total-questions');
-        const finalMessage = document.getElementById('final-message');
-        const questionNav = document.getElementById('question-nav');
-        const questionContainer = document.getElementById('question-container');
+    <!-- CHAT -->
+    <div class="card">
+      <h3>Ask anything</h3>
+      <div class="mut" style="font-size:12px">Requires an OpenAI key above.</div>
+      <div class="row">
+        <input id="q" placeholder="e.g., draft a safe 2-leg slip for tonight" style="flex:1">
+        <button onclick="ask()">Ask</button>
+      </div>
+      <pre id="a" class="mono">—</pre>
+    </div>
 
-        const baseOptionClass =
-          "w-full text-left p-3 sm:p-4 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-700 hover:border-slate-500 transition-all duration-200 flex items-center justify-between group text-sm sm:text-base";
-        const correctOptionClass =
-          "w-full text-left p-3 sm:p-4 rounded-xl border border-green-500 bg-green-500/20 text-green-200 transition-all flex items-center justify-between text-sm sm:text-base";
-        const incorrectOptionClass =
-          "w-full text-left p-3 sm:p-4 rounded-xl border border-red-500 bg-red-500/20 text-red-200 transition-all flex items-center justify-between text-sm sm:text-base";
+    <!-- BET SLIP -->
+    <div class="card">
+      <h3>Draft bet slip (advisory only)</h3>
+      <textarea id="picks" rows="5" class="mono" style="width:100%"
+        placeholder='[{"game_id":"id","market":"spread","selection":"LAL -2.5","price":-110,"commence_time":"2025-12-14T19:05:00Z"}]'></textarea>
+      <div class="row">
+        <input id="stake" type="number" placeholder="Stake" value="10" style="width:120px">
+        <select id="stype"><option>single</option><option>parlay</option></select>
+        <button onclick="buildSlip()">Build Slip</button>
+      </div>
+      <pre id="slip" class="mono">—</pre>
+    </div>
+  </div>
+</main>
 
-        // --- INIT ---
-        function init() {
-            createSnowflakes();
-            createLights();
-            renderQuestion();
-        }
+<script>
+  // ========= GATE =========
+  const ACCESS_CODE = "64786";
+  let sessionId = Math.random().toString(16).slice(2);
+  const mem = []; // simple per-session memory
 
-        // --- SNOWFLAKES ---
-        function createSnowflakes() {
-            const count = window.innerWidth < 640 ? 30 : 50;
-            for (let i = 0; i < count; i++) {
-                const flake = document.createElement('div');
-                flake.classList.add('snowflake');
-                const size = Math.random() * 10 + 5;
-                flake.style.width = `${size}px`;
-                flake.style.height = `${size}px`;
-                flake.style.left = `${Math.random() * 100}%`;
-                flake.style.opacity = Math.random() * 0.5 + 0.3;
-                
-                const duration = Math.random() * 3 + 2;
-                const delay = Math.random() * 5;
-                flake.style.animation = `fall ${duration}s linear infinite -${delay}s`;
-                
-                snowContainer.appendChild(flake);
-            }
-        }
+  function unlock() {
+    const code = document.getElementById('code').value.trim();
+    const msg = document.getElementById('gate_msg');
+    if (code === ACCESS_CODE) {
+      document.getElementById('gate').classList.add('hide');
+      document.getElementById('app').classList.remove('hide');
+      loadKeys();
+      refreshAll();
+      maybeTick();
+      msg.textContent = "";
+    } else {
+      msg.textContent = "Wrong code.";
+    }
+  }
 
-        // --- LIGHTS ---
-        function createLights() {
-            const colors = [
-                'bg-red-500 shadow-red-500/50',
-                'bg-emerald-400 shadow-emerald-400/50',
-                'bg-amber-300 shadow-amber-300/50',
-                'bg-cyan-400 shadow-cyan-400/50',
-                'bg-fuchsia-400 shadow-fuchsia-400/50'
-            ];
-            const lightCount = window.innerWidth < 640 ? 10 : 16;
-            for (let i = 0; i < lightCount; i++) {
-                const light = document.createElement('div');
-                const colorClass = colors[i % colors.length];
-                light.className = `light w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 rounded-full shadow-lg ${colorClass}`;
-                light.style.animationDelay = `${i * 0.2}s`;
-                lightsContainer.appendChild(light);
-            }
-        }
+  // ========= KEYS =========
+  function saveKeys() {
+    const odds = document.getElementById('odds_key').value.trim();
+    const openai = document.getElementById('openai_key').value.trim();
+    sessionStorage.setItem('propline_odds_key', odds);
+    sessionStorage.setItem('propline_openai_key', openai);
+    document.getElementById('keys_status').textContent = "Saved.";
+    setTimeout(()=>document.getElementById('keys_status').textContent="",1500);
+  }
+  function loadKeys() {
+    document.getElementById('odds_key').value = sessionStorage.getItem('propline_odds_key') || "";
+    document.getElementById('openai_key').value = sessionStorage.getItem('propline_openai_key') || "";
+  }
+  function getOddsKey(){ return sessionStorage.getItem('propline_odds_key') || ""; }
+  function getOpenAIKey(){ return sessionStorage.getItem('propline_openai_key') || ""; }
 
-        function updateScore() {
-            score = questionStates.reduce(
-                (sum, q) => sum + (q.answered && q.isCorrect ? 1 : 0),
-                0
-            );
-            scoreTracker.innerText = `Score: ${score}`;
-        }
+  // ========= LIVE FEEDS =========
+  async function fetchScoreboard(league) {
+    const path = league === "nfl" ? "football/nfl" :
+                 league === "mlb" ? "baseball/mlb" :
+                 league === "nhl" ? "hockey/nhl" :
+                 "basketball/nba";
+    const url = `https://site.api.espn.com/apis/site/v2/sports/${path}/scoreboard`;
+    const r = await fetch(url, { headers: { "user-agent": "propline/1.0" }});
+    if (!r.ok) throw new Error("ESPN scoreboard failed: " + r.status);
+    const j = await r.json();
+    return (j.events||[]).map(e => {
+      const c = e.competitions?.[0] || {};
+      const home = c.competitors?.find(x=>x.homeAway==="home")?.team?.displayName;
+      const away = c.competitors?.find(x=>x.homeAway==="away")?.team?.displayName;
+      const st = (e.status?.type?.state || "pre").toLowerCase();
+      return `${away} @ ${home} — ${new Date(e.date).toLocaleString()} (${st})`;
+    });
+  }
 
-        function updateProgressBar() {
-            const answeredCount = questionStates.filter(q => q.answered).length;
-            const progress = (answeredCount / questions.length) * 100;
-            progressBar.style.width = `${progress}%`;
-        }
+  async function fetchOdds(sport, region="us") {
+    const key = getOddsKey();
+    if (!key) throw new Error("No Odds API key");
+    const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds?regions=${region}&oddsFormat=american&markets=h2h,spreads,totals&apiKey=${encodeURIComponent(key)}`;
+    const r = await fetch(url);
+    if (!r.ok) {
+      const t = await r.text().catch(()=> "");
+      throw new Error(`Odds API failed: ${r.status} ${t.slice(0,120)}`);
+    }
+    const games = await r.json();
+    return games.slice(0,10).map(g => {
+      const markets = (g.bookmakers?.[0]?.markets||[]).map(m=>m.key).join(", ");
+      return `• ${g.away_team} @ ${g.home_team} — ${new Date(g.commence_time).toLocaleString()}
+  markets: ${markets}`;
+    });
+  }
 
-        function renderQuestionNav() {
-            questionNav.innerHTML = "";
-            questions.forEach((_, idx) => {
-                const state = questionStates[idx];
-                const btn = document.createElement('button');
+  // ========= CHAT =========
+  async function ask() {
+    const openaiKey = getOpenAIKey();
+    const msg = document.getElementById('q').value.trim();
+    if (!openaiKey) { document.getElementById('a').textContent = "Add your OpenAI key first."; return; }
+    if (!msg) return;
 
-                let base =
-                    "rounded-full py-1 sm:py-1.5 px-2 sm:px-3 border text-[11px] sm:text-xs transition-all";
-                
-                if (idx === currentQuestionIndex) {
-                    btn.className =
-                        base +
-                        " border-transparent text-slate-900 font-semibold bg-gradient-to-br from-red-400 via-emerald-300 to-amber-300 shadow-md";
-                } else if (state.answered && state.isCorrect) {
-                    btn.className =
-                        base +
-                        " border-emerald-400 text-emerald-300 bg-emerald-900/30";
-                } else if (state.answered && !state.isCorrect) {
-                    btn.className =
-                        base +
-                        " border-red-400 text-red-300 bg-red-900/30";
-                } else {
-                    btn.className =
-                        base +
-                        " border-slate-600 text-slate-300 bg-slate-800/60";
-                }
+    mem.push({ role:"user", text: msg, t: Date.now() });
+    const league = document.getElementById('league').value;
+    const sport  = document.getElementById('sport').value;
 
-                btn.innerText = idx + 1;
-                btn.onclick = () => {
-                    currentQuestionIndex = idx;
-                    renderQuestion();
-                };
-                questionNav.appendChild(btn);
-            });
-        }
+    // pull fresh data to ground the answer
+    let slateTxt = "[]", oddsTxt = "[]";
+    try { slateTxt = JSON.stringify(await fetchScoreboard(league)); } catch {}
+    try { oddsTxt  = JSON.stringify(await fetchOdds(sport)); } catch {}
 
-        function renderQuestion() {
-            const q = questions[currentQuestionIndex];
-            const state = questionStates[currentQuestionIndex];
+    const system = `
+You are a cautious sports advisory assistant.
+- Use only the provided live data payloads.
+- Always show exact game times & dates from the payload.
+- Never guarantee outcomes. Keep it concise.
+- For parlays/slips, include kickoff timestamps and a brief responsible note.`;
 
-            questionText.innerText = q.question;
-            questionTracker.innerText =
-                `Question ${currentQuestionIndex + 1} of ${questions.length}`;
-            updateScore();
-            updateProgressBar();
-            renderQuestionNav();
+    const tools = [
+      JSON.stringify({ memory: mem.slice(-8) }),
+      JSON.stringify({ slate: slateTxt }),
+      JSON.stringify({ odds: oddsTxt }),
+    ];
 
-            optionsContainer.innerHTML = '';
-            optionsContainer.classList.remove('pointer-events-none');
+    try {
+      const r = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: { "content-type":"application/json", "authorization": "Bearer " + openaiKey },
+        body: JSON.stringify({
+          model: "gpt-4o", // change if your account uses a different model
+          input: [
+            { role:"system", content: system },
+            { role:"tool", content: tools[0] },
+            { role:"tool", content: tools[1] },
+            { role:"tool", content: tools[2] },
+            { role:"user", content: msg }
+          ]
+        })
+      });
+      if (!r.ok) throw new Error("OpenAI error: " + r.status);
+      const data = await r.json();
+      const out = data.output_text || "(no response)";
+      mem.push({ role:"assistant", text: out, t: Date.now() });
+      document.getElementById('a').textContent = out;
+    } catch (e) {
+      document.getElementById('a').textContent = "Chat error: " + e.message;
+    }
+  }
 
-            q.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.className = baseOptionClass;
-                const span = document.createElement('span');
-                span.innerText = opt.text;
-                span.className = "pr-2";
-                btn.appendChild(span);
+  // ========= BET SLIP =========
+  function buildSlip() {
+    const picks = JSON.parse(document.getElementById('picks').value || "[]");
+    const stake = Number(document.getElementById('stake').value || "0");
+    const type  = document.getElementById('stype').value;
+    const legs = picks.map((p,i)=>({
+      id:`leg_${i+1}`, game_id:p.game_id, market:p.market, selection:p.selection,
+      price:p.price, kickoff:p.commence_time
+    }));
+    const slip = { createdAt:new Date().toISOString(), sessionId, type, stake, legs };
+    document.getElementById('slip').textContent = JSON.stringify(slip,null,2);
+  }
 
-                btn.onclick = () => handleAnswer(opt, btn, idx);
-                optionsContainer.appendChild(btn);
-            });
+  // ========= UI FLOW =========
+  async function refreshAll() {
+    const league = document.getElementById('league').value;
+    const sport  = document.getElementById('sport').value;
+    document.getElementById('stamp').textContent = "Refreshing…";
+    // Slate
+    try {
+      const lines = await fetchScoreboard(league);
+      document.getElementById('slate').textContent = lines.join("\n") || "No events";
+    } catch (e) {
+      document.getElementById('slate').textContent = "Error: " + e.message;
+    }
+    // Odds
+    try {
+      const lines = await fetchOdds(sport);
+      document.getElementById('odds').textContent = lines.join("\n\n") || "No odds";
+    } catch (e) {
+      document.getElementById('odds').textContent = "Odds: " + e.message + " (paste The Odds API key above)";
+    }
+    document.getElementById('stamp').textContent = "Last updated: " + new Date().toLocaleString();
+  }
 
-            feedbackArea.classList.add('hidden');
-            retryBtn.classList.add('hidden');
-
-            if (state.answered && state.selectedIndex !== null) {
-                const allButtons = optionsContainer.querySelectorAll('button');
-                const selectedBtn = allButtons[state.selectedIndex];
-                if (selectedBtn) {
-                    selectedBtn.className = correctOptionClass;
-                }
-                optionsContainer.classList.add('pointer-events-none');
-
-                explanationBox.className =
-                    "p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border bg-green-900/30 border-green-500/30";
-                feedbackTitle.innerText = "CORRECT!";
-                explanationText.innerText = q.explanation;
-                feedbackArea.classList.remove('hidden');
-            }
-
-            if (currentQuestionIndex === questions.length - 1) {
-                nextBtnText.innerText = "See Results";
-            } else {
-                nextBtnText.innerText = "Next Question";
-            }
-        }
-
-        function handleAnswer(option, btnElement, optionIndex) {
-            const state = questionStates[currentQuestionIndex];
-            const q = questions[currentQuestionIndex];
-
-            if (state.answered && state.isCorrect) {
-                return;
-            }
-
-            const allButtons = optionsContainer.querySelectorAll('button');
-            allButtons.forEach(b => (b.className = baseOptionClass));
-
-            const isCorrect = option.isCorrect;
-
-            if (isCorrect) {
-                state.answered = true;
-                state.isCorrect = true;
-                state.selectedIndex = optionIndex;
-
-                btnElement.className = correctOptionClass;
-                btnElement.innerHTML += `<svg class="w-5 h-5 flex-shrink-0 text-green-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
-
-                explanationBox.className =
-                    "p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border bg-green-900/30 border-green-500/30";
-                feedbackTitle.innerText = "CORRECT!";
-                explanationText.innerText = q.explanation;
-                feedbackArea.classList.remove('hidden');
-                retryBtn.classList.add('hidden');
-                optionsContainer.classList.add('pointer-events-none');
-
-                updateScore();
-                updateProgressBar();
-                renderQuestionNav();
-            } else {
-                state.answered = false;
-                state.isCorrect = false;
-                state.selectedIndex = null;
-
-                btnElement.className = incorrectOptionClass;
-                btnElement.innerHTML += `<svg class="w-5 h-5 flex-shrink-0 text-red-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
-
-                explanationBox.className =
-                    "p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 border bg-red-900/30 border-red-500/30";
-                feedbackTitle.innerText = "INCORRECT";
-                explanationText.innerText = q.explanation;
-                feedbackArea.classList.remove('hidden');
-                retryBtn.classList.remove('hidden');
-                optionsContainer.classList.add('pointer-events-none');
-
-                updateScore();
-                updateProgressBar();
-            }
-        }
-
-        retryBtn.onclick = () => {
-            questionStates[currentQuestionIndex] = {
-                answered: false,
-                isCorrect: false,
-                selectedIndex: null
-            };
-            feedbackArea.classList.add('hidden');
-            retryBtn.classList.add('hidden');
-            renderQuestion();
-        };
-
-        nextBtn.onclick = () => {
-            const state = questionStates[currentQuestionIndex];
-
-            if (!state.answered || !state.isCorrect) {
-                alert("Get this one correct (or retry) before moving on!");
-                return;
-            }
-
-            if (currentQuestionIndex < questions.length - 1) {
-                currentQuestionIndex++;
-                renderQuestion();
-            } else {
-                showResults();
-            }
-        };
-
-        function showResults() {
-            progressSection.classList.add('hidden');
-            questionContainer.classList.add('hidden');
-            optionsContainer.classList.add('hidden');
-            feedbackArea.classList.add('hidden');
-            questionNav.classList.add('hidden');
-            resultsSection.classList.remove('hidden');
-
-            updateScore();
-            finalScore.innerText = score;
-            totalQuestionsSpan.innerText = questions.length;
-
-            if (score >= 27) {
-                finalMessage.innerHTML =
-                    `<span class="text-green-300">🎄 Outstanding! You're an E-Commerce Expert! 🎄</span>`;
-            } else if (score >= 20) {
-                finalMessage.innerHTML =
-                    `<span class="text-yellow-300">⛄ Great job! You know your stuff. ⛄</span>`;
-            } else {
-                finalMessage.innerHTML =
-                    `<span class="text-red-300">❄️ Keep studying and try again! ❄️</span>`;
-            }
-        }
-
-        window.restartQuiz = function () {
-            currentQuestionIndex = 0;
-            questionStates = questions.map(() => ({
-                answered: false,
-                isCorrect: false,
-                selectedIndex: null
-            }));
-            score = 0;
-            resultsSection.classList.add('hidden');
-            progressSection.classList.remove('hidden');
-            questionContainer.classList.remove('hidden');
-            optionsContainer.classList.remove('hidden');
-            questionNav.classList.remove('hidden');
-            renderQuestion();
-        };
-
-        init();
-    </script>
+  function maybeTick() {
+    const cb = document.getElementById('autorefresh');
+    if (!cb) return;
+    setInterval(()=>{ if (cb.checked) refreshAll(); }, 60_000);
+  }
+</script>
 </body>
 </html>
